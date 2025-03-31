@@ -1,7 +1,8 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Header from "@/components/Header"; // assuming this is the path
+import Header from "@/components/Header";
 import { FiSettings, FiGitBranch, FiAperture, FiX } from "react-icons/fi";
 
 type CardType = "square" | "wide" | "classic" | "phone";
@@ -13,7 +14,6 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
-  // Initial cards on mount
   useEffect(() => {
     const types: CardType[] = ["square", "wide", "classic", "phone"];
     const generateCards = (count: number, offset: number = 0) =>
@@ -35,7 +35,6 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
-  // Infinite Scroll
   useEffect(() => {
     const handleScroll = () => {
       const nearBottom =
@@ -73,8 +72,11 @@ export default function Home() {
   };
 
   return (
-    <>
-      {/* Sidebar */}
+      <div
+          className={`transition-colors duration-500 ${
+            darkMode ? "bg-[#111] text-white" : "bg-[#e8e0da] text-black"
+          }`}
+        >
       <div className="fixed top-4 left-4 z-50">
         <button
           className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center shadow-lg"
@@ -132,16 +134,10 @@ export default function Home() {
         )}
       </div>
 
-      {/* Header */}
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
-      {/* Main */}
-      <main
-        className={`${
-          darkMode ? "bg-[#1e1e1e] text-white" : "bg-[#e8e0da] text-black"
-        } min-h-screen px-6 py-8 transition-colors duration-300`}
-      >
-        <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 space-y-4">
+      <main className="min-h-screen px-6 pb-8  transition-colors duration-500">
+        <div className="mt-4 columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 space-y-4 transition-colors duration-500 ease-in-out">
           {cards.map((card, idx) => {
             const imageUrl = `https://picsum.photos/seed/${card.seed}/600/400`;
             return (
@@ -149,7 +145,7 @@ export default function Home() {
                 key={idx}
                 className={`break-inside-avoid overflow-hidden cursor-pointer ${
                   darkMode ? "bg-[#2a2a2a]" : "bg-white"
-                } rounded-xl shadow-md border border-[#ddd] transform transition duration-300 ease-in-out hover:-translate-y-2 hover:shadow-xl ${getAspectStyle(
+                } rounded-xl shadow-md border border-[#ddd] transform transition duration-500 ease-in-out hover:-translate-y-2 hover:shadow-xl ${getAspectStyle(
                   card.type
                 )}`}
                 onClick={() => setActiveImage(imageUrl)}
@@ -165,7 +161,6 @@ export default function Home() {
           })}
         </div>
 
-        {/* Fullscreen Modal */}
         {activeImage && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
@@ -186,6 +181,6 @@ export default function Home() {
           </div>
         )}
       </main>
-    </>
+    </div>
   );
 }
