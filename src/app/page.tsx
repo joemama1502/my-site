@@ -31,18 +31,23 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
+  // Disable body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = activeImage ? "hidden" : "auto";
+  }, [activeImage]);
+
   const getAspectStyle = (type: CardType) => {
     switch (type) {
       case "square":
-        return "aspect-square";
+        return "aspect-square sm:aspect-square";
       case "wide":
-        return "aspect-video";
+        return "aspect-video sm:aspect-video";
       case "classic":
-        return "aspect-[4/3]";
+        return "aspect-[4/3] sm:aspect-[4/3]";
       case "phone":
-        return "aspect-[9/16]";
+        return "aspect-[9/16] sm:aspect-[9/16]";
       default:
-        return "aspect-square";
+        return "aspect-square sm:aspect-square";
     }
   };
 
@@ -103,18 +108,18 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <main className={`${darkMode ? "bg-[#1e1e1e] text-white" : "bg-[#e8e0da] text-black"} min-h-screen px-6 py-8 transition-colors duration-300`}>
+      <main className={`${darkMode ? "bg-[#1e1e1e] text-white" : "bg-[#e8e0da] text-black"} min-h-screen px-2 sm:px-6 py-8 transition-colors duration-300`}>
         <header className="flex flex-col items-center mb-8">
           {/* Logo */}
-          <div className="relative w-[400px] h-[200px] mb-4">
-              <Image
-                src={darkMode ? "/logo-white.png" : "/logo.png"}
-                alt="PromptTreehouse Logo"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
+          <div className="relative w-[300px] sm:w-[400px] h-[150px] sm:h-[200px] mb-4">
+            <Image
+              src={darkMode ? "/logo-white.png" : "/logo.png"}
+              alt="PromptTreehouse Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
 
           {/* Search Input */}
           <input
@@ -165,7 +170,7 @@ export default function Home() {
         </header>
 
         {/* Card Grid */}
-        <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 space-y-4">
+        <div className="columns-2 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 space-y-4">
           {cards.map((card, idx) => {
             const imageUrl = `https://picsum.photos/seed/${card.seed}/600/400`;
             return (
@@ -187,7 +192,7 @@ export default function Home() {
         {/* Fullscreen Modal */}
         {activeImage && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+            className="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-80"
             onClick={() => setActiveImage(null)}
           >
             <img
