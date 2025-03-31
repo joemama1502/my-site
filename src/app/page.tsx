@@ -1,21 +1,26 @@
 "use client";
 
 export default function Home() {
-  const placeholders = Array.from({ length: 12 });
+  const placeholders = Array.from({ length: 18 });
 
   return (
-    <main className="min-h-screen bg-green-50 px-4 py-10 flex flex-col items-center">
-      <h1 className="text-5xl font-bold text-green-800 mb-2">🌱 PromptTreehouse</h1>
-      <p className="text-lg text-green-700 mb-10 text-center max-w-xl">
-        Explore creative seeds, branch into new ideas, and grow the forest.
-      </p>
+    <main className="min-h-screen bg-[#e8e0da] px-6 py-8">
+      {/* Header */}
+      <header className="flex flex-col items-center mb-8">
+        <h1 className="text-4xl font-bold text-[#95978b]">🌱 PromptTreehouse</h1>
+        <input
+          type="text"
+          placeholder="Search"
+          className="mt-4 w-full max-w-xl rounded-full px-4 py-2 border border-[#ccc] bg-white shadow-sm focus:outline-none"
+        />
+      </header>
 
-      {/* Pinterest-style grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 w-full max-w-6xl">
+      {/* Pinterest-style masonry grid */}
+      <div className="columns-2 sm:columns-3 md:columns-4 gap-4 space-y-4">
         {placeholders.map((_, idx) => (
           <div
             key={idx}
-            className="bg-white aspect-[3/4] rounded-xl shadow-md border border-green-100 flex items-center justify-center text-green-300 text-2xl font-bold"
+            className="break-inside-avoid bg-white rounded-xl shadow-md border border-[#ddd] p-4 flex items-center justify-center text-[#ccc] text-3xl font-bold h-[200px]"
           >
             +
           </div>
