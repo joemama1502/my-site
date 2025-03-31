@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Header from "@/components/Header";
 import { FiSettings, FiGitBranch, FiAperture, FiX } from "react-icons/fi";
 
