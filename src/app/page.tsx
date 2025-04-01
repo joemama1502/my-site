@@ -8,13 +8,16 @@ import CardGrid, { CardData, CardType } from "@/components/CardGrid"; // Import 
 import { motion, AnimatePresence } from "framer-motion"; // Keep for Modal
 
 // Debounce function (keep it here or move to a utils file)
-function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
+function debounce<F extends (...args: unknown[]) => unknown>(func: F, waitFor: number) {
   let timeout: ReturnType<typeof setTimeout> | null = null;
-  const debounced = (...args: Parameters<F>) => {
-    if (timeout !== null) { clearTimeout(timeout); timeout = null; }
+  const debounced = (...args: Parameters<F>): void => {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
     timeout = setTimeout(() => func(...args), waitFor);
   };
-  return debounced as (...args: Parameters<F>) => ReturnType<F>;
+  return debounced;
 }
 
 export default function Home() {
