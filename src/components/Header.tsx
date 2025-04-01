@@ -97,57 +97,46 @@ export default function Header({
 
       {/* STICKY SCROLL HEADER */}
       <div
-        className={`fixed top-0 left-0 w-full z-[999] px-4 sm:px-6 py-2 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4
-          transition-all duration-300 ease-in-out backdrop-blur-md shadow-md ${
-            darkMode ? "bg-[#111]/80" : "bg-white/60"
-          } ${heroVisible ? "opacity-0 -translate-y-4" : "opacity-100 translate-y-0"}`}
+        className={`fixed top-0 left-0 w-full z-[999] px-4 sm:px-6 py-2 transition-all duration-300 ease-in-out backdrop-blur-md shadow-md ${
+          darkMode ? "bg-[#111]/80" : "bg-white/60"
+        } ${heroVisible ? "opacity-0 -translate-y-4" : "opacity-100 translate-y-0"}`}
       >
-        <div className="flex items-center gap-4 w-full max-w-6xl mx-auto flex-wrap justify-between">
-          {/* Logo small */}
-          <div className="w-[180px] sm:w-[200px] h-[50px] relative shrink-0">
-            <Image
-              src={darkMode ? "/logo-white.png" : "/logo.png"}
-              alt="PromptTreehouse Logo"
-              fill
-              className="object-contain"
+        <div className="flex flex-wrap items-center justify-between gap-3 w-full max-w-6xl mx-auto">
+          {/* Search bar */}
+          <div className="flex-grow sm:max-w-md">
+            <input
+              type="text"
+              placeholder="Search"
+              className="w-full rounded-full px-4 py-2 border border-[#ccc] bg-white text-black shadow-sm focus:outline-none"
             />
           </div>
 
-          {/* Search and Icons inline (responsive) */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 flex-grow">
-            <div className="w-full sm:max-w-sm md:max-w-md lg:max-w-xl">
-              <input
-                type="text"
-                placeholder="Search"
-                className="w-full rounded-full px-4 py-2 border border-[#ccc] bg-white text-black shadow-sm focus:outline-none"
-              />
-            </div>
-            <div className="flex gap-3 items-center">
-              {["seed", "leaf", "tree", "moon"].map((icon) => (
-                <button
-                  key={icon}
-                  className="w-8 h-8 hover:-translate-y-1 transition-transform"
-                  onClick={() =>
-                    icon === "moon"
-                      ? setDarkMode(!darkMode)
-                      : console.log(`${icon} clicked`)
+          {/* Icon row */}
+          <div className="flex gap-3 items-center">
+            {["seed", "leaf", "tree", "moon"].map((icon) => (
+              <button
+                key={icon}
+                className="w-8 h-8 hover:-translate-y-1 transition-transform"
+                onClick={() =>
+                  icon === "moon"
+                    ? setDarkMode(!darkMode)
+                    : console.log(`${icon} clicked`)
+                }
+              >
+                <Image
+                  src={
+                    darkMode
+                      ? `/icons/${icon}-white.png`
+                      : `/icons/${icon}.png`
                   }
-                >
-                  <Image
-                    src={
-                      darkMode
-                        ? `/icons/${icon}-white.png`
-                        : `/icons/${icon}.png`
-                    }
-                    alt=""
-                    aria-hidden="true"
-                    width={32}
-                    height={32}
-                    className="object-contain"
-                  />
-                </button>
-              ))}
-            </div>
+                  alt=""
+                  aria-hidden="true"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
+              </button>
+            ))}
           </div>
         </div>
       </div>
