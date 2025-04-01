@@ -1,187 +1,174 @@
+// src/app/page.tsx (or your main page file)
 "use client";
 
-import { useEffect, useState } from "react";
-import Header from "@/components/Header";
-import { FiSettings, FiGitBranch, FiAperture, FiX } from "react-icons/fi";
+import { useEffect, useState, useCallback } from "react";
+import Header from "@/components/Header"; // Assuming correct path
+import Sidebar from "@/components/Sidebar"; // Import Sidebar
+import CardGrid, { CardData, CardType } from "@/components/CardGrid"; // Import CardGrid and types
+import { motion, AnimatePresence } from "framer-motion"; // Keep for Modal
 
-type CardType = "square" | "wide" | "classic" | "phone";
+// Debounce function (keep it here or move to a utils file)
+function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  const debounced = (...args: Parameters<F>) => {
+    if (timeout !== null) { clearTimeout(timeout); timeout = null; }
+    timeout = setTimeout(() => func(...args), waitFor);
+  };
+  return debounced as (...args: Parameters<F>) => ReturnType<F>;
+}
 
 export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
-  const [cards, setCards] = useState<{ type: CardType; seed: number }[]>([]);
+  const [cards, setCards] = useState<CardData[]>([]);
   const [activeImage, setActiveImage] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Track loading state for infinite scroll
 
-  useEffect(() => {
+  // Function to generate cards - now generates CardData with id and imageUrl
+  const generateCards = useCallback((count: number, offset: number = 0): CardData[] => {
     const types: CardType[] = ["square", "wide", "classic", "phone"];
-    const generateCards = (count: number, offset: number = 0) =>
-      Array.from({ length: count }, (_, i) => ({
-        type: types[Math.floor(Math.random() * types.length)],
-        seed: i + 1 + offset,
-      }));
+    return Array.from({ length: count }, (_, i) => {
+       const seed = offset + i + 1;
+       const type = types[Math.floor(Math.random() * types.length)];
+       return {
+         type: type,
+         seed: seed,
+         // Generate a unique ID, combining seed and type or using a library like uuid
+         id: `card-${seed}-${type}-${Math.random()}`,
+         imageUrl: `https://picsum.photos/seed/${seed}/600/400`, // Generate URL here
+       };
+    });
+  }, []); // No dependencies, safe to memoize
 
-    setCards(generateCards(32));
+  // Effect for initial card load
+  useEffect(() => {
+    // Prevent running on server or during fast refresh in dev if needed
+    if (typeof window !== 'undefined' && cards.length === 0) {
+       console.log("Loading initial cards...");
+       const initialCards = generateCards(32);
+       setCards(initialCards);
+    }
+  }, [generateCards, cards.length]); // Rerun if generateCards changes or cards array becomes empty
 
+  // Effect for infinite scrolling - Debounced
+  useEffect(() => {
+    const checkForMoreCards = () => {
+      // Ensure it doesn't run while already loading
+      if (isLoading) return;
+
+      // Check if near bottom
+      const nearBottom =
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 600; // Adjusted threshold
+
+      if (nearBottom) {
+        setIsLoading(true); // Set loading flag
+        console.log("Loading more cards...");
+        // Simulate network delay for loading spinner (optional)
+        setTimeout(() => {
+           setCards((prev) => {
+             const newCards = generateCards(16, prev.length);
+             return [...prev, ...newCards];
+           });
+           setIsLoading(false); // Reset loading flag
+        }, 500); // Simulate 500ms load time
+      }
+    };
+
+    const debouncedScrollHandler = debounce(checkForMoreCards, 200);
+    window.addEventListener("scroll", debouncedScrollHandler, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", debouncedScrollHandler);
+    };
+  }, [generateCards, isLoading]); // Depend on generateCards and isLoading
+
+  // Effect for closing modal with Escape key
+   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setSidebarVisible(false);
-        setTimeout(() => setSidebarOpen(false), 300);
+        setActiveImage(null); // Close image modal
       }
     };
+     window.addEventListener("keydown", handleEsc);
+     return () => window.removeEventListener("keydown", handleEsc);
+   }, []);
 
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
+
+  // --- Image Modal Management ---
+  const openImageModal = useCallback((imageUrl: string) => {
+      setActiveImage(imageUrl);
+  }, []); // Memoize if passed deeply, though simple here
+
+   const closeImageModal = useCallback(() => {
+      setActiveImage(null);
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const nearBottom =
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 300;
-      if (nearBottom) {
-        setCards((prev) => {
-          const offset = prev.length;
-          const types: CardType[] = ["square", "wide", "classic", "phone"];
-          const newCards = Array.from({ length: 16 }, (_, i) => ({
-            type: types[Math.floor(Math.random() * types.length)],
-            seed: offset + i + 1,
-          }));
-          return [...prev, ...newCards];
-        });
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const getAspectStyle = (type: CardType) => {
-    switch (type) {
-      case "square":
-        return "aspect-square";
-      case "wide":
-        return "aspect-video";
-      case "classic":
-        return "aspect-[4/3]";
-      case "phone":
-        return "aspect-[9/16]";
-      default:
-        return "aspect-square";
-    }
-  };
 
   return (
+    // Main container sets background and text color based on dark mode
     <div
-      className={`transition-colors duration-500 min-h-screen ${
+      className={`min-h-screen transition-colors duration-500 ease-in-out ${
         darkMode ? "bg-[#111] text-white" : "bg-[#e8e0da] text-black"
       }`}
     >
-      {/* Top-left floating user button */}
-      <div className="fixed top-4 left-4 z-50">
-        <button
-          className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center shadow-lg"
-          onClick={() => {
-            setSidebarOpen(true);
-            setTimeout(() => setSidebarVisible(true), 10);
-          }}
-        >
-          U
-        </button>
+      {/* Sidebar component is self-managing */}
+      <Sidebar username="@TreeUser" />
 
-        {sidebarOpen && (
-          <div
-            className={`mt-4 w-48 bg-[#2a2a2a] text-white rounded-xl shadow-lg py-4 px-3 flex flex-col gap-4 transition-all duration-300 ${
-              sidebarVisible
-                ? "translate-x-0 opacity-100"
-                : "-translate-x-4 opacity-0"
-            }`}
-          >
-            <button
-              onClick={() => (window.location.href = "/profile")}
-              className="text-left font-semibold hover:text-green-300 transition"
-            >
-              @Username
-            </button>
-
-            <hr className="border-gray-600" />
-
-            <button className="flex items-center gap-2 hover:text-green-300 transition">
-              <FiGitBranch />
-              Branches
-            </button>
-            <button className="flex items-center gap-2 hover:text-green-300 transition">
-              <FiAperture />
-              Trees
-            </button>
-            <button className="flex items-center gap-2 hover:text-green-300 transition">
-              <FiSettings />
-              Settings
-            </button>
-
-            <div className="mt-auto pt-4 border-t border-gray-600">
-              <button
-                className="flex items-center gap-2 text-red-400 hover:text-red-500 transition"
-                onClick={() => {
-                  setSidebarVisible(false);
-                  setTimeout(() => setSidebarOpen(false), 300);
-                }}
-              >
-                <FiX />
-                Close
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
+      {/* Header Component */}
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
-      <main className="px-4 pb-10 transition-colors duration-500">
-        <div className="mt-4 columns-2 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 space-y-4">
-          {cards.map((card, idx) => {
-            const imageUrl = `https://picsum.photos/seed/${card.seed}/600/400`;
-            return (
-              <div
-                key={idx}
-                className={`break-inside-avoid overflow-hidden cursor-pointer ${
-                  darkMode ? "bg-[#2a2a2a]" : "bg-white"
-                } rounded-xl shadow-md border border-[#ddd] transform transition duration-500 ease-in-out hover:-translate-y-2 hover:shadow-xl ${getAspectStyle(
-                  card.type
-                )}`}
-                onClick={() => setActiveImage(imageUrl)}
-              >
-                <img
-                  src={imageUrl}
-                  alt={`Preview ${card.seed}`}
-                  loading="lazy"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            );
-          })}
-        </div>
+      {/* Main Content Area */}
+      <main className="px-4 pb-10 pt-4 transition-colors duration-500">
+        {/* Card Grid Component */}
+        <CardGrid
+          cards={cards}
+          darkMode={darkMode}
+          onImageClick={openImageModal}
+        />
 
-        {activeImage && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
-            onClick={() => setActiveImage(null)}
-          >
-            <img
-              src={activeImage}
-              alt="Fullscreen"
-              className="max-w-full max-h-full object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
-            <button
-              onClick={() => setActiveImage(null)}
-              className="absolute top-6 right-6 text-white text-3xl font-bold"
-            >
-              ×
-            </button>
+         {/* Loading Indicator for Infinite Scroll */}
+        {isLoading && (
+          <div className="text-center py-6">
+            <p className="text-gray-500 dark:text-gray-400">Loading more...</p>
+             {/* Optional: Add a spinner */}
           </div>
         )}
       </main>
+
+      {/* --- Image Lightbox Modal (remains in page.tsx) --- */}
+      <AnimatePresence>
+        {activeImage && (
+          <motion.div
+            key="image-modal" // Added key for AnimatePresence
+            className="fixed inset-0 z-[1002] flex items-center justify-center bg-black/80 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            onClick={closeImageModal}
+          >
+            <motion.div
+              className="relative max-w-full max-h-full"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut", delay: 0.1 }}
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
+            >
+              <img
+                src={activeImage}
+                alt="Enlarged view"
+                className="block max-w-full max-h-[90vh] object-contain shadow-lg rounded-lg"
+              />
+              <button
+                onClick={closeImageModal}
+                className="absolute -top-2 -right-2 w-8 h-8 bg-white text-black rounded-full flex items-center justify-center text-xl font-bold shadow-lg hover:bg-gray-200 transition focus:outline-none focus:ring-2 focus:ring-white"
+                aria-label="Close image viewer"
+              >
+                &times;
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-

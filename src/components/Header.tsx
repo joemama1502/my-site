@@ -1,6 +1,10 @@
+// Header.tsx
+
 "use client";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+// --- ADDED --- (We'll create this component next)
+import CreateSeedModal from './CreateSeedModal';
 
 export default function Header({
   darkMode,
@@ -11,6 +15,8 @@ export default function Header({
 }) {
   const [scrollY, setScrollY] = useState(0);
   const [lastScrollY, setLastScrollY] = useState(0);
+  // --- ADDED --- State for modal visibility
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,6 +30,16 @@ export default function Header({
 
   const scrolled = scrollY > 80;
   const heroVisible = scrollY < 300;
+
+  // --- ADDED --- Function to handle opening the modal
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  // --- ADDED --- Function to handle closing the modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
 
   return (
     <>
@@ -65,12 +81,20 @@ export default function Header({
             {["seed", "leaf", "tree", "moon"].map((icon) => (
               <button
                 key={icon}
-                className="w-10 h-10 hover:-translate-y-1 transition-transform"
-                onClick={() =>
-                  icon === "moon"
-                    ? setDarkMode(!darkMode)
-                    : console.log(`${icon} clicked`)
-                }
+                // --- MODIFIED --- Added hover scale effect, especially noticeable on seed
+                className={`w-10 h-10 hover:-translate-y-1 transition-transform ${
+                  icon === "seed" ? "hover:scale-110" : "" // Add specific hover effect to seed
+                }`}
+                onClick={() => {
+                  // --- MODIFIED --- Handle seed icon click
+                  if (icon === "seed") {
+                    handleOpenModal();
+                  } else if (icon === "moon") {
+                    setDarkMode(!darkMode);
+                  } else {
+                    console.log(`${icon} clicked`);
+                  }
+                }}
               >
                 <Image
                   src={
@@ -107,12 +131,20 @@ export default function Header({
               {["seed", "leaf", "tree", "moon"].map((icon) => (
                 <button
                   key={icon}
-                  className="w-8 h-8 hover:-translate-y-1 transition-transform"
-                  onClick={() =>
-                    icon === "moon"
-                      ? setDarkMode(!darkMode)
-                      : console.log(`${icon} clicked`)
-                  }
+                  // --- MODIFIED --- Added hover scale effect, especially noticeable on seed
+                  className={`w-8 h-8 hover:-translate-y-1 transition-transform ${
+                    icon === "seed" ? "hover:scale-110" : "" // Add specific hover effect to seed
+                  }`}
+                  onClick={() => {
+                     // --- MODIFIED --- Handle seed icon click
+                    if (icon === "seed") {
+                      handleOpenModal();
+                    } else if (icon === "moon") {
+                      setDarkMode(!darkMode);
+                    } else {
+                      console.log(`${icon} clicked`);
+                    }
+                  }}
                 >
                   <Image
                     src={
@@ -120,7 +152,7 @@ export default function Header({
                         ? `/icons/${icon}-white.png`
                         : `/icons/${icon}.png`
                     }
-                    alt=""
+                    alt="" // Keep alt empty for decorative icons in sticky header? Or add proper alt.
                     aria-hidden="true"
                     width={32}
                     height={32}
@@ -132,6 +164,13 @@ export default function Header({
           </div>
         </div>
       </div>
+
+      {/* --- ADDED --- Render the modal conditionally */}
+      <CreateSeedModal //
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        darkMode={darkMode}
+      />
     </>
   );
 }
