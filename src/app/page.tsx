@@ -71,11 +71,12 @@ export default function Home() {
   };
 
   return (
-      <div
-          className={`transition-colors duration-500 ${
-            darkMode ? "bg-[#111] text-white" : "bg-[#e8e0da] text-black"
-          }`}
-        >
+    <div
+      className={`min-h-screen transition-colors duration-500 ${
+        darkMode ? "bg-[#111] text-white" : "bg-[#ece1d6] text-black"
+      }`}
+    >
+      {/* Sidebar Button */}
       <div className="fixed top-4 left-4 z-50">
         <button
           className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center shadow-lg"
@@ -133,9 +134,11 @@ export default function Home() {
         )}
       </div>
 
+      {/* Header */}
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
-      <main className="min-h-screen px-6 pb-8  transition-colors duration-500">
+      {/* Main Grid */}
+      <main className="px-6 pb-8 transition-colors duration-500">
         <div className="mt-4 columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 space-y-4 transition-colors duration-500 ease-in-out">
           {cards.map((card, idx) => {
             const imageUrl = `https://picsum.photos/seed/${card.seed}/600/400`;
@@ -160,6 +163,7 @@ export default function Home() {
           })}
         </div>
 
+        {/* Fullscreen Image View */}
         {activeImage && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
