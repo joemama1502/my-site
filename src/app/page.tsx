@@ -72,11 +72,11 @@ export default function Home() {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-500 ${
-        darkMode ? "bg-[#111] text-white" : "bg-[#ece1d6] text-black"
+      className={`transition-colors duration-500 min-h-screen ${
+        darkMode ? "bg-[#111] text-white" : "bg-[#e8e0da] text-black"
       }`}
     >
-      {/* Sidebar Button */}
+      {/* Top-left floating user button */}
       <div className="fixed top-4 left-4 z-50">
         <button
           className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center shadow-lg"
@@ -90,9 +90,7 @@ export default function Home() {
 
         {sidebarOpen && (
           <div
-            className="mt-4 columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 2xl:columns-7 gap-4 space-y-4 ...">
-
-            ${
+            className={`mt-4 w-48 bg-[#2a2a2a] text-white rounded-xl shadow-lg py-4 px-3 flex flex-col gap-4 transition-all duration-300 ${
               sidebarVisible
                 ? "translate-x-0 opacity-100"
                 : "-translate-x-4 opacity-0"
@@ -100,7 +98,7 @@ export default function Home() {
           >
             <button
               onClick={() => (window.location.href = "/profile")}
-              className="text-left font-semibold text-white hover:text-green-300 transition"
+              className="text-left font-semibold hover:text-green-300 transition"
             >
               @Username
             </button>
@@ -136,12 +134,10 @@ export default function Home() {
         )}
       </div>
 
-      {/* Header */}
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
-      {/* Main Grid */}
-      <main className="px-6 pb-8 transition-colors duration-500">
-        <div className="mt-4 columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 space-y-4 transition-colors duration-500 ease-in-out">
+      <main className="px-4 pb-10 transition-colors duration-500">
+        <div className="mt-4 columns-2 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 space-y-4">
           {cards.map((card, idx) => {
             const imageUrl = `https://picsum.photos/seed/${card.seed}/600/400`;
             return (
@@ -165,7 +161,6 @@ export default function Home() {
           })}
         </div>
 
-        {/* Fullscreen Image View */}
         {activeImage && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
@@ -189,3 +184,4 @@ export default function Home() {
     </div>
   );
 }
+

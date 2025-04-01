@@ -37,7 +37,6 @@ export default function Header({
           </>
         )}
 
-
         {/* Main hero content */}
         <div
           className={`relative z-20 flex flex-col items-center pt-8 pb-6 transition-colors duration-500 ease-in-out ${
@@ -64,11 +63,11 @@ export default function Header({
           <input
             type="text"
             placeholder="Search"
-            className="w-full max-w-lg rounded-full px-4 py-2 border border-[#ccc] bg-white text-black shadow-sm focus:outline-none"
+            className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl rounded-full px-4 py-2 border border-[#ccc] bg-white text-black shadow-sm focus:outline-none"
           />
 
           {/* Icon Row */}
-          <div className="mt-4 flex gap-6 justify-center items-center">
+          <div className="mt-4 flex gap-6 justify-center items-center flex-wrap">
             {["seed", "leaf", "tree", "moon"].map((icon) => (
               <button
                 key={icon}
@@ -88,6 +87,7 @@ export default function Header({
                   alt={`${icon} Icon`}
                   width={40}
                   height={40}
+                  className="object-contain"
                 />
               </button>
             ))}
@@ -97,14 +97,14 @@ export default function Header({
 
       {/* STICKY SCROLL HEADER */}
       <div
-        className={`fixed top-0 left-0 w-full z-[999] px-4 sm:px-6 py-2 flex items-center justify-between
+        className={`fixed top-0 left-0 w-full z-[999] px-4 sm:px-6 py-2 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4
           transition-all duration-300 ease-in-out backdrop-blur-md shadow-md ${
             darkMode ? "bg-[#111]/80" : "bg-white/60"
           } ${heroVisible ? "opacity-0 -translate-y-4" : "opacity-100 translate-y-0"}`}
       >
-        <div className="flex items-center gap-4 w-full max-w-6xl mx-auto">
+        <div className="flex items-center gap-4 w-full max-w-6xl mx-auto flex-wrap justify-between">
           {/* Logo small */}
-          <div className="pl-4 w-[180px] sm:w-[200px] h-[50px] relative shrink-0">
+          <div className="w-[180px] sm:w-[200px] h-[50px] relative shrink-0">
             <Image
               src={darkMode ? "/logo-white.png" : "/logo.png"}
               alt="PromptTreehouse Logo"
@@ -113,16 +113,16 @@ export default function Header({
             />
           </div>
 
-          {/* Search and Icons inline */}
-          <div className="flex-grow flex items-center justify-center gap-4">
-            <div className="flex-grow max-w-sm sm:max-w-md md:max-w-xl lg:max-w-3xl">
+          {/* Search and Icons inline (responsive) */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 flex-grow">
+            <div className="w-full sm:max-w-sm md:max-w-md lg:max-w-xl">
               <input
                 type="text"
                 placeholder="Search"
                 className="w-full rounded-full px-4 py-2 border border-[#ccc] bg-white text-black shadow-sm focus:outline-none"
               />
             </div>
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-3 items-center">
               {["seed", "leaf", "tree", "moon"].map((icon) => (
                 <button
                   key={icon}
@@ -134,17 +134,17 @@ export default function Header({
                   }
                 >
                   <Image
-                      src={
-                        darkMode
-                          ? `/icons/${icon}-white.png`
-                          : `/icons/${icon}.png`
-                      }
-                      alt=""
-                      aria-hidden="true"
-                      width={32}
-                      height={32}
-                      className="object-contain"
-                    />
+                    src={
+                      darkMode
+                        ? `/icons/${icon}-white.png`
+                        : `/icons/${icon}.png`
+                    }
+                    alt=""
+                    aria-hidden="true"
+                    width={32}
+                    height={32}
+                    className="object-contain"
+                  />
                 </button>
               ))}
             </div>
