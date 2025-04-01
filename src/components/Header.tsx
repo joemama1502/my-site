@@ -134,15 +134,17 @@ export default function Header({
                   }
                 >
                   <Image
-                    src={
-                      darkMode
-                        ? `/icons/${icon}-white.png`
-                        : `/icons/${icon}.png`
-                    }
-                    alt={`${icon} Icon`}
-                    width={32}
-                    height={32}
-                  />
+                      src={
+                        darkMode
+                          ? `/icons/${icon}-white.png`
+                          : `/icons/${icon}.png`
+                      }
+                      alt=""
+                      aria-hidden="true"
+                      width={32}
+                      height={32}
+                      className="object-contain"
+                    />
                 </button>
               ))}
             </div>
