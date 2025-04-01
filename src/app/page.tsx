@@ -90,7 +90,9 @@ export default function Home() {
 
         {sidebarOpen && (
           <div
-            className={`mt-4 w-48 bg-[#2a2a2a] text-white rounded-xl shadow-lg py-4 px-3 flex flex-col gap-4 transition-all duration-300 ${
+            className="mt-4 columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 2xl:columns-7 gap-4 space-y-4 ...">
+
+            ${
               sidebarVisible
                 ? "translate-x-0 opacity-100"
                 : "-translate-x-4 opacity-0"
