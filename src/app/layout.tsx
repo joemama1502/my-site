@@ -1,14 +1,12 @@
-// CORRECTED src/app/layout.tsx
+// src/app/layout.tsx
 
 import type { Metadata } from "next";
-// Import fonts for side effects (loads the CSS needed)
-import "geist/font/sans";
-import "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
-import AuthProvider from "@/components/AuthProvider"; // Keep AuthProvider import
+import AuthProvider from "@/components/AuthProvider";
 
-// REMOVED FONT FUNCTION CALLS AND className FROM HTML
-
+// Define metadata
 export const metadata: Metadata = {
   title: "TreeHouse",
   description: "A New Home for Human Creativity",
@@ -20,13 +18,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // REMOVED className PROP FROM HTML
-    <html lang="en">
-      <body>
+    // Apply font variables to the <html> tag
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+
+      {/* It's standard to include a <head> tag, even if Next.js manages much of its content */}
+      <head>
+        {/* You can add meta tags, links, etc. here if needed */}
+        {/* Note: Next.js often handles title, description from metadata export */}
+      </head>
+
+      {/* Apply base body styles. Ensure NO comments/whitespace exist between <html> and <body> */}
+      <body className="antialiased">
         <AuthProvider>
           {children}
         </AuthProvider>
       </body>
+
     </html>
   );
 }
