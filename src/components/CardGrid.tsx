@@ -3,23 +3,21 @@
 
 import { useState, useEffect } from 'react';
 import { Masonry } from "masonic";
-// FIX: Import SeedCard and SeedCardData - SeedCardData will now be used directly
-import SeedCard, { SeedCardData, CardType } from "./SeedCard"; // Assuming CardType is also exported from SeedCard or defined globally
+// FIX: Only import SeedCardData directly used by this component
+import SeedCard, { SeedCardData } from "./SeedCard";
+// FIX: Explicitly re-export CardType so page.tsx can import it from here
+export type { CardType } from "./SeedCard"; // Assuming CardType is exported from SeedCard
 
-// FIX: Removed local CardData interface definition. Using imported SeedCardData instead.
-// export interface CardData { ... }
-
-// Props now expect an array of SeedCardData
+// Use SeedCardData for props
 interface CardGridProps {
   cards: SeedCardData[];
   darkMode: boolean;
   onImageClick: (imageUrl: string) => void;
 }
 
-// MasonryCard now receives data typed as SeedCardData plus extra props
+// MasonryCard receives data typed as SeedCardData plus extra props
 const MasonryCard = ({ data }: { data: SeedCardData & { darkMode: boolean, onImageClick: (imageUrl: string) => void } }) => {
     const { darkMode, onImageClick, ...seedData } = data;
-    // Pass the correct props to SeedCard
     return ( <SeedCard seed={seedData} darkMode={darkMode} onImageClick={onImageClick} /> );
 };
 
@@ -29,7 +27,6 @@ function useWindowWidth() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
     const handleResize = () => setWidth(window.innerWidth);
     if (width === 0) {
         setWidth(window.innerWidth);
@@ -66,7 +63,7 @@ export default function CardGrid({ cards, darkMode, onImageClick }: CardGridProp
     return ( <div className="text-center py-10 text-gray-500 dark:text-gray-300">Loading seeds...</div> );
   }
 
-  // Prepare items for Masonic (items are already SeedCardData, just add extra props)
+  // Prepare items for Masonic
   const itemsWithProps = cards.map(card => ({ ...card, darkMode, onImageClick }));
 
   // Prevent rendering Masonic with 0 columns
@@ -86,3 +83,38 @@ export default function CardGrid({ cards, darkMode, onImageClick }: CardGridProp
     />
   );
 }
+
+// Also ensure SeedCard.tsx correctly defines and exports SeedCardData and CardType
+// Example structure for SeedCard.tsx might be:
+/*
+import React from 'react';
+
+export type CardType = "square" | "wide" | "classic" | "phone";
+
+export interface SeedCardData {
+  id: string | number;
+  type: CardType;
+  seed: number | string;
+  imageUrl: string;
+  hits?: number;
+  branches?: number;
+}
+
+interface SeedCardProps {
+  seed: SeedCardData;
+  darkMode: boolean;
+  onImageClick: (imageUrl: string) => void;
+}
+
+const SeedCard: React.FC<SeedCardProps> = ({ seed, darkMode, onImageClick }) => {
+  // ... component implementation ...
+  return (
+    <div onClick={() => onImageClick(seed.imageUrl)}>
+       <img src={seed.imageUrl} alt={`Seed ${seed.seed}`} loading="lazy" />
+       // ... other card details ...
+    </div>
+  );
+};
+
+export default SeedCard;
+*/
