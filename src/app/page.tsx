@@ -2,19 +2,17 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Image from 'next/image'; // Import Next.js Image component
+import Image from 'next/image';
 
 // Component Imports
 import Header from "@/components/Header";
-// import Sidebar from "@/components/Sidebar"; // Keep commented/removed if not used
-import CardGrid, { SeedCardData, CardType } from "@/components/CardGrid"; // Ensure types are exported/defined correctly
+// import Sidebar from "@/components/Sidebar";
+// FIX: Import SeedCardData AND CardType from CardGrid
+import CardGrid, { SeedCardData, CardType } from "@/components/CardGrid";
 
 // Animation and Utility Imports
 import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from 'react-intersection-observer';
-
-// Define CardType if not exported from CardGrid
-// type CardType = "square" | "wide" | "classic" | "phone";
 
 export default function Home() {
   // --- State ---
@@ -22,7 +20,8 @@ export default function Home() {
   const [cards, setCards] = useState<SeedCardData[]>([]);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasNextPage, setHasNextPage] = useState(true);
+  // FIX: Removed unused 'setHasNextPage' setter from useState
+  const [hasNextPage] = useState(true);
 
   // --- Hooks & Logic ---
   const { ref: loadMoreRef, inView } = useInView({
@@ -32,7 +31,7 @@ export default function Home() {
 
   // Function to generate cards
   const generateCards = useCallback((count: number, offset: number = 0): SeedCardData[] => {
-    // Assuming CardType is defined/imported correctly
+    // Ensure CardType is imported correctly above
     const types: CardType[] = ["square", "wide", "classic", "phone"];
     return Array.from({ length: count }, (_, i) => {
       const seed = offset + i + 1;
@@ -40,7 +39,7 @@ export default function Home() {
       return {
         type: type,
         seed: seed,
-        id: `card-${seed}-${type}-${Math.random()}`, // Use a better unique ID method in production
+        id: `card-${seed}-${type}-${Math.random()}`,
         imageUrl: `https://picsum.photos/seed/${seed}/600/400`,
         hits: Math.floor(Math.random() * 500) + 1,
         branches: Math.floor(Math.random() * 50) + 1,
@@ -56,25 +55,25 @@ export default function Home() {
     setTimeout(() => {
       setCards((prev) => {
         const newCards = generateCards(16, prev.length);
-        // TODO: Check if newCards.length === 0 and call setHasNextPage(false)
-        // if (newCards.length === 0) { setHasNextPage(false); }
+        // if (newCards.length === 0) {
+        //   setHasNextPage(false); // <-- If you implement this, add setHasNextPage back to useState and the dependency array below
+        // }
         return [...prev, ...newCards];
       });
       setIsLoading(false);
     }, 800);
-  }, [generateCards, isLoading, hasNextPage]); // Removed setHasNextPage dependency
+  }, [generateCards, isLoading, hasNextPage]); // No setHasNextPage dependency needed currently
 
   // --- Effects ---
 
   // Effect for initial card load
   useEffect(() => {
-    // Check needed to prevent hydration mismatch if initial state is calculated differently server/client
     if (typeof window !== 'undefined' && cards.length === 0) {
       console.log("Loading initial cards...");
       const initialCards = generateCards(32);
       setCards(initialCards);
     }
-  }, [generateCards, cards.length]); // Added cards.length dependency
+  }, [generateCards, cards.length]);
 
   // Effect for infinite scrolling using useInView
   useEffect(() => {
@@ -106,7 +105,6 @@ export default function Home() {
 
   // --- Render ---
   return (
-    // Ensure no space after opening angle bracket
     <div
       className={`min-h-screen transition-colors duration-500 ease-in-out ${
         darkMode ? "bg-[#121212] text-white" : "bg-[#ece1d6] text-black"
@@ -117,6 +115,7 @@ export default function Home() {
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
       <main className="px-4 pb-10 pt-8 transition-colors duration-500">
+        {/* Pass SeedCardData typed array */}
         <CardGrid
           cards={cards}
           darkMode={darkMode}
