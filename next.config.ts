@@ -1,7 +1,9 @@
 // next.config.ts
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from 'next';
+
+// Use TypeScript's type annotation directly
+const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
