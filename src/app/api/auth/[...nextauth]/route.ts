@@ -1,5 +1,5 @@
-// src/app/api/auth/[...nextauth]/route.ts
-import NextAuth, { AuthOptions } from "next-auth" // Import AuthOptions type
+/// src/app/api/auth/[...nextauth]/route.ts
+import NextAuth, { AuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
@@ -15,8 +15,8 @@ if (!googleClientId || !googleClientSecret || !nextAuthSecret) {
   throw new Error("Missing Google OAuth or NEXTAUTH_SECRET environment variables");
 }
 
-// Explicitly type authOptions for better intellisense and safety
-export const authOptions: AuthOptions = {
+// FIX: Removed 'export' keyword here. authOptions is used locally but not exported.
+const authOptions: AuthOptions = {
   providers: [
     GoogleProvider({
       clientId: googleClientId,
@@ -24,12 +24,8 @@ export const authOptions: AuthOptions = {
     }),
   ],
   secret: nextAuthSecret,
-
   debug: process.env.NODE_ENV === 'development',
   callbacks: {
-    // Assuming the 'email' and 'credentials' errors were from old code,
-    // this signature ({ user, account, profile }) looks correct for GoogleProvider
-    // and uses all its parameters in the console.log below.
     async signIn({ user, account, profile }) {
       console.log('[NextAuth Callback: signIn]', { user, account, profile });
       return true;
@@ -49,25 +45,21 @@ export const authOptions: AuthOptions = {
        }
       return token;
     },
-    // FIX: Removed the unused 'user' parameter from the session callback signature
-    async session({ session, token /* removed user */ }) {
+    async session({ session, token }) { // Correct signature without user
       console.log('[NextAuth Callback: session]', { session, token });
       if (token?.id) {
-          // Ensure session.user exists before assigning to it
           if (!session.user) {
-            session.user = {}; // Initialize if it doesn't exist
+            session.user = {};
           }
           session.user.id = token.id as string;
       }
-      // Example: If you wanted to add the access token (carefully)
-      // if (token?.accessToken) {
-      //    session.accessToken = token.accessToken as string;
-      // }
       return session;
     }
   }
-}
+}; // Ensure this closing brace for authOptions is present
 
-const handler = NextAuth(authOptions)
+// Initialize the NextAuth handler using the local authOptions
+const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST }
+// Export the handler for GET and POST requests, which is correct
+export { handler as GET, handler as POST };
