@@ -1,7 +1,22 @@
-import type { NextConfig } from "next";
+// next.config.ts
 
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        // Existing entry for Google avatars
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        // --- ADD THIS NEW ENTRY for Picsum ---
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+    ],
+  },
+  // Keep any other existing configurations you might have
 };
 
 export default nextConfig;

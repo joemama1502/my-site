@@ -1,4 +1,5 @@
 // src/components/CreateSeedModal.tsx
+// This code already implements the requested background colors and blur
 
 "use client";
 
@@ -13,13 +14,13 @@ interface CreateSeedModalProps {
   darkMode: boolean;
 }
 
-// Define UI Colors (keeping subtle pastels)
+// Define UI Colors (includes correct theme backgrounds)
 const uiColors = {
   pink: { light: 'bg-pink-100', dark: 'bg-pink-900/30' },
   blue: { light: 'bg-blue-100', dark: 'bg-blue-900/30' },
   green: { light: 'bg-green-100', dark: 'bg-green-900/30' },
   yellow: { light: 'bg-yellow-100', dark: 'bg-yellow-900/30' },
-  // Using the theme background colors with opacity for the modal box
+  // Using the requested theme background colors with opacity
   background: { light: 'bg-[#ece1d6]/95', dark: 'bg-[#121212]/95' },
   text: { light: 'text-gray-700', dark: 'text-gray-300' },
   placeholder: { light: 'placeholder-gray-500', dark: 'placeholder-gray-500' },
@@ -70,23 +71,20 @@ export default function CreateSeedModal({ isOpen, onClose, darkMode }: CreateSee
   return (
     <AnimatePresence>
       {isOpen && (
-        // Overlay - Reduced blur, primarily for dimming effect
+        // Overlay - Using light blur
         <motion.div
           key="modal-overlay"
-          // --- REDUCED BLUR HERE ---
-          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 backdrop-blur-sm" // Reduced to backdrop-blur-sm
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 backdrop-blur-sm" // Kept light overlay blur
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           onClick={onClose}
         >
-          {/* Modal Content Box - ADDED BLUR HERE */}
+          {/* Modal Content Box - Includes correct background colors and blur */}
           <motion.div
             key="modal-content"
-            // --- ADDED backdrop-blur-md TO THIS ELEMENT ---
-            className={`relative p-6 rounded-3xl shadow-xl w-full max-w-sm mx-4 flex flex-col gap-4 min-h-[450px] backdrop-blur-md ${darkMode ? uiColors.background.dark : uiColors.background.light} ${darkMode ? uiColors.text.dark : uiColors.text.light}`}
-            // --- End of key change ---
+            className={`relative p-6 rounded-3xl shadow-xl w-full max-w-sm mx-4 flex flex-col gap-4 min-h-[450px] backdrop-blur-md ${darkMode ? uiColors.background.dark : uiColors.background.light} ${darkMode ? uiColors.text.dark : uiColors.text.light}`} // Already has correct classes
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -111,7 +109,7 @@ export default function CreateSeedModal({ isOpen, onClose, darkMode }: CreateSee
               >
                 <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
                 {imagePreview ? (
-                  <Image src={imagePreview} alt="Preview" layout="fill" objectFit="cover" className="opacity-90" />
+                  <Image src={imagePreview} alt="Preview" layout="fill" objectFit="cover" className="opacity-90 rounded-2xl" /> // Added rounding
                 ) : (
                   <div className={`flex flex-col items-center ${darkMode ? uiColors.icon.dark : uiColors.icon.light}`}>
                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 mb-1"> <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
