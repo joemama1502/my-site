@@ -6,8 +6,10 @@ import Image from 'next/image';
 
 // Component Imports
 import Header from "@/components/Header";
+
 // import Sidebar from "@/components/Sidebar";
-import CardGrid, { SeedCardData, CardType } from "@/components/CardGrid";
+import CardGrid, { CardType } from "@/components/CardGrid";
+import { SeedCardData } from "@/components/SeedCard";
 
 // Animation and Utility Imports
 import { motion, AnimatePresence } from "framer-motion";
