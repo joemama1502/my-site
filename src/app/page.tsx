@@ -36,7 +36,7 @@ export default function Home() {
       return {
         type: type,
         seed: seed,
-        id: `card-${seed}-${type}-${Math.random()}`,
+        id: `card-${seed}-${type}-${Math.random()}`, // Use better ID in production
         imageUrl: `https://picsum.photos/seed/${seed}/600/400`,
         hits: Math.floor(Math.random() * 500) + 1,
         branches: Math.floor(Math.random() * 50) + 1,
@@ -59,29 +59,34 @@ export default function Home() {
     }, 800);
   }, [generateCards, isLoading, hasNextPage]);
 
-  // --- Effects ---
+  // --- Effects --- // Section around line 100 starts here
+
+  // Effect for initial card load (Lines ~91-97)
   useEffect(() => {
     if (typeof window !== 'undefined' && cards.length === 0) {
+      // console.log("Loading initial cards..."); // Console logs can be removed
       const initialCards = generateCards(32);
       setCards(initialCards);
     }
   }, [generateCards, cards.length]);
 
+  // Effect for infinite scrolling using useInView (Lines ~99-104)
   useEffect(() => {
     if (inView && !isLoading && hasNextPage) {
       loadMoreItems();
     }
   }, [inView, isLoading, hasNextPage, loadMoreItems]);
 
+  // Effect for closing modal with Escape key (Lines ~106-113)
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") setActiveImage(null);
     };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, []);
+  }, []); // No stray characters here
 
-  // --- Image Modal Management ---
+  // --- Image Modal Management --- (Lines ~115-122)
   const openImageModal = useCallback((imageUrl: string) => {
     setActiveImage(imageUrl);
   }, []);
@@ -90,10 +95,11 @@ export default function Home() {
     setActiveImage(null);
   }, []);
 
-  // --- Render ---
+
+  // --- Render --- (Starts ~125)
   return (
-    // THE FIX IS HERE: Make sure it's <div> not < div
-    <div>
+    // Correct div tag (no space)
+    <div
       className={`min-h-screen transition-colors duration-500 ease-in-out ${
         darkMode ? "bg-[#121212] text-white" : "bg-[#ece1d6] text-black"
       }`}
