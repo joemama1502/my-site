@@ -2,12 +2,10 @@
 import type { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-// These environment variables are needed HERE now
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const nextAuthSecret = process.env.NEXTAUTH_SECRET;
 
-// Check for variables HERE
 if (!googleClientId || !googleClientSecret || !nextAuthSecret) {
   console.error("Missing environment variables in authOptions:", {
     googleClientId: !!googleClientId,
@@ -17,7 +15,6 @@ if (!googleClientId || !googleClientSecret || !nextAuthSecret) {
   throw new Error("Missing Google OAuth or NEXTAUTH_SECRET environment variables");
 }
 
-// Define AND EXPORT the options object HERE
 export const authOptions: AuthOptions = {
   providers: [
     GoogleProvider({
@@ -38,17 +35,22 @@ export const authOptions: AuthOptions = {
     },
     async jwt({ token, user, account, profile }) {
       console.log('[NextAuth Callback: jwt]', { token, user, account });
+      // This correctly assigns the ID from the Google profile ('sub' field)
       if (account && profile) {
         token.id = profile.sub;
         token.accessToken = account.access_token;
       }
-      if (user) {
-        token.id = user.id;
-      }
+      // --- FIX: Removed the problematic block below ---
+      // if (user) {
+      //   // This caused the error because 'user' in jwt callback lacks .id
+      //   token.id = user.id;
+      // }
+      // --- End Fix ---
       return token;
     },
     async session({ session, token }) {
       console.log('[NextAuth Callback: session]', { session, token });
+      // This correctly adds the id (from the token) to the session user object
       if (token?.id) {
         if (!session.user) {
           session.user = {};
