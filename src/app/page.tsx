@@ -1,171 +1,141 @@
-// src/app/page.tsx
-"use client";
+""// src/app/profile/page.tsx
+'use client';
 
-import { useEffect, useState, useCallback } from "react";
-import Image from 'next/image';
+import React, { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import CardGrid from '@/components/CardGrid';
+import { SeedCardData } from '@/components/SeedCard';
 
-// Component Imports
-import Header from "@/components/Header";
+const mockPosts: SeedCardData[] = [
+  { id: 1, type: 'square', seed: '123', imageUrl: '/images/example1.jpg', hits: 409, branches: 12 },
+  { id: 2, type: 'square', seed: '456', imageUrl: '/images/example2.jpg', hits: 206, branches: 9 },
+  { id: 3, type: 'square', seed: '789', imageUrl: '/images/example3.jpg', hits: 123, branches: 5 },
+  { id: 4, type: 'phone', seed: '999', imageUrl: '/images/example4.jpg', hits: 312, branches: 20 },
+];
 
-// import Sidebar from "@/components/Sidebar";
-import CardGrid, { CardType } from "@/components/CardGrid";
-import { SeedCardData } from "@/components/SeedCard";
+const sanitizeEmail = (email?: string) =>
+  email?.replace(/[^a-zA-Z0-9]/g, '_') || 'guest';
 
-// Animation and Utility Imports
-import { motion, AnimatePresence } from "framer-motion";
-import { useInView } from 'react-intersection-observer';
+const ProfilePage = () => {
+  const { data: session } = useSession();
+  const userId = sanitizeEmail(session?.user?.email);
 
-export default function Home() {
-  // --- State ---
-  const [darkMode, setDarkMode] = useState(false);
-  const [cards, setCards] = useState<SeedCardData[]>([]);
-  const [activeImage, setActiveImage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasNextPage] = useState(true); // Removed unused setter
+  const [bannerUrl, setBannerUrl] = useState<string>('');
+  const [isLoadingBanner, setIsLoadingBanner] = useState(true);
+  const [hovering, setHovering] = useState(false);
 
-  // --- Hooks & Logic ---
-  const { ref: loadMoreRef, inView } = useInView({
-    threshold: 0,
-    rootMargin: "400px 0px 0px 0px"
-  });
+  useEffect(() => {
+    async function loadBanner() {
+      if (!userId) return;
+      setIsLoadingBanner(true);
+      try {
+        const res = await fetch(`/api/banner?user=${userId}`);
+        const json = await res.json();
+        if (json?.url) {
+          setBannerUrl(json.url);
+          console.log('📸 Loaded banner URL:', json.url);
+        } else {
+          throw new Error('No banner found');
+        }
+      } catch (err) {
+        setBannerUrl('/images/default-banner.jpg');
+        console.warn('❗ Using fallback banner');
+      }
+      setIsLoadingBanner(false);
+    }
 
-  // Function to generate cards
-  const generateCards = useCallback((count: number, offset: number = 0): SeedCardData[] => {
-    const types: CardType[] = ["square", "wide", "classic", "phone"];
-    return Array.from({ length: count }, (_, i) => {
-      const seed = offset + i + 1;
-      const type = types[Math.floor(Math.random() * types.length)];
-      return {
-        type: type,
-        seed: seed,
-        id: `card-${seed}-${type}-${Math.random()}`, // Use better ID in production
-        imageUrl: `https://picsum.photos/seed/${seed}/600/400`,
-        hits: Math.floor(Math.random() * 500) + 1,
-        branches: Math.floor(Math.random() * 50) + 1,
-      };
-    });
-  }, []);
+    loadBanner();
+  }, [userId]);
 
-  // Function to load more items
-  const loadMoreItems = useCallback(() => {
-    if (isLoading || !hasNextPage) return;
-    setIsLoading(true);
-    console.log("Loading more cards (useInView)...");
-    setTimeout(() => {
-      setCards((prev) => {
-        const newCards = generateCards(16, prev.length);
-        // if (newCards.length === 0) { setHasNextPage(false); } // Add setter back if needed
-        return [...prev, ...newCards];
+  const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('user', userId);
+
+    try {
+      const res = await fetch('/api/upload-banner', {
+        method: 'POST',
+        body: formData,
       });
-      setIsLoading(false);
-    }, 800);
-  }, [generateCards, isLoading, hasNextPage]);
-
-  // --- Effects --- // Section around line 100 starts here
-
-  // Effect for initial card load (Lines ~91-97)
-  useEffect(() => {
-    if (typeof window !== 'undefined' && cards.length === 0) {
-      // console.log("Loading initial cards..."); // Console logs can be removed
-      const initialCards = generateCards(32);
-      setCards(initialCards);
+      const json = await res.json();
+      if (json?.url) {
+        setBannerUrl(`${json.url}?t=${Date.now()}`);
+        console.log('✅ Banner updated:', json.url);
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (err) {
+      console.error('❌ Upload error:', err);
     }
-  }, [generateCards, cards.length]);
+  };
 
-  // Effect for infinite scrolling using useInView (Lines ~99-104)
-  useEffect(() => {
-    if (inView && !isLoading && hasNextPage) {
-      loadMoreItems();
-    }
-  }, [inView, isLoading, hasNextPage, loadMoreItems]);
-
-  // Effect for closing modal with Escape key (Lines ~106-113)
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setActiveImage(null);
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, []); // No stray characters here
-
-  // --- Image Modal Management --- (Lines ~115-122)
-  const openImageModal = useCallback((imageUrl: string) => {
-    setActiveImage(imageUrl);
-  }, []);
-
-  const closeImageModal = useCallback(() => {
-    setActiveImage(null);
-  }, []);
-
-
-  // --- Render --- (Starts ~125)
   return (
-    // Correct div tag (no space)
-    <div
-      className={`min-h-screen transition-colors duration-500 ease-in-out ${
-        darkMode ? "bg-[#121212] text-white" : "bg-[#ece1d6] text-black"
-      }`}
-    >
-      {/* <Sidebar username="@TreeUser" /> */}
-      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-      <main className="px-4 pb-10 pt-8 transition-colors duration-500">
-        <CardGrid
-          cards={cards}
-          darkMode={darkMode}
-          onImageClick={openImageModal}
-        />
-        {isLoading && (
-          <div className="text-center py-6">
-            <p className="text-gray-500 dark:text-gray-400">Loading more...</p>
+    <div className="min-h-screen w-full bg-white dark:bg-black">
+      {/* Banner */}
+      <div
+        className="w-full h-80 relative flex items-center justify-center"
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+      >
+        {isLoadingBanner ? (
+          <div className="w-full h-full animate-pulse bg-neutral-200 dark:bg-neutral-800" />
+        ) : (
+          <img
+            src={bannerUrl}
+            alt="Profile Banner"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              console.warn('❗ Failed to load banner. Using fallback.');
+              e.currentTarget.src = '/images/default-banner.jpg';
+            }}
+          />
+        )}
+
+        {hovering && (
+          <label className="absolute bottom-4 bg-white text-black px-3 py-1 rounded cursor-pointer shadow text-sm z-10">
+            Upload Banner
+            <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
+          </label>
+        )}
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center px-6 py-6 space-x-6">
+        <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-md bg-neutral-200">
+          <img
+            src={session?.user?.image || '/images/default-pfp.jpg'}
+            alt="Profile"
+            className="object-cover w-full h-full"
+            onError={(e) => {
+              console.warn('❗ Failed to load profile image.');
+              e.currentTarget.src = '/images/default-pfp.jpg';
+            }}
+          />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-black dark:text-white">
+            @{session?.user?.name || 'username'}
+          </h2>
+          <div className="text-sm mt-1 flex gap-2 text-black dark:text-white">
+            <span>🌱 {mockPosts.length} hits</span>
+            <span>🌿 12</span>
+            <span>🌳 3</span>
           </div>
-        )}
-        <div ref={loadMoreRef} style={{ height: "1px", marginTop: "10px" }} />
-      </main>
-      <AnimatePresence>
-        {activeImage && (
-          <motion.div
-            key="image-modal"
-            className="fixed inset-0 z-[1005] bg-black/80 flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            onClick={closeImageModal}
-          >
-            <motion.div
-              className="relative"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Image
-                src={activeImage}
-                alt="Enlarged view"
-                width={1200}
-                height={900}
-                style={{
-                  maxWidth: '90vw',
-                  maxHeight: '90vh',
-                  width: 'auto',
-                  height: 'auto',
-                  objectFit: 'contain',
-                  borderRadius: '8px',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
-                }}
-              />
-              <button
-                onClick={closeImageModal}
-                className="absolute -top-2 -right-2 md:top-1 md:right-1 w-8 h-8 bg-white/70 text-black rounded-full flex items-center justify-center text-xl font-bold shadow-lg hover:bg-white transition focus:outline-none focus:ring-2 focus:ring-white backdrop-blur-sm"
-                aria-label="Close image viewer"
-              >
-                &times;
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <button className="mt-2 px-4 py-1 text-sm bg-white text-pink-600 rounded-full shadow">
+            🌸 Pick (14)
+          </button>
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div className="px-4 md:px-8 mt-12">
+        <CardGrid cards={[...mockPosts]} darkMode={false} onImageClick={() => {}} />
+      </div>
     </div>
   );
-}
+};
+
+export default ProfilePage;

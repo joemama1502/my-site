@@ -1,93 +1,181 @@
-// src/components/Header.tsx
 "use client";
 
-// --- React / Next Imports ---
 import Image from "next/image";
-// FIX: Removed unused useCallback
 import { useEffect, useState } from "react";
-
-// --- next-auth Imports ---
-// FIX: Removed unused signIn, signOut, useSession
-// import { signIn, signOut, useSession } from "next-auth/react";
-
-// --- Animation Imports ---
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
 
-// --- Icon Imports ---
-// FIX: Removed unused FiUser
-import { FiPlusCircle, FiSettings, FiGitBranch, FiAperture, FiMoon } from "react-icons/fi";
+import CreateSeedModal from "./CreateSeedModal";
+import LoginModal from "./LoginModal";
+import AuthControl from "./AuthControl";
 
-// --- Component Imports ---
-import CreateSeedModal from './CreateSeedModal';
-import LoginModal from './LoginModal';
-import AuthControl from './AuthControl'; // Keep if used
+const funSearchMessages = [
+  "Chase a trail of breadcrumbs 🥖",
+  "Plant your weirdest ideas 🌱",
+  "Dig up something cool 🪄",
+  "Enter the rabbit hole 🕳️",
+  "What’s blooming in your mind?",
+  "Summon something strange 🔮",
+  "Find your creative frequency 💳",
+  "Whistle to the void 🎶",
+  "Scroll and grow 🌱",
+  "Make some prompt magic ✨",
+  "What weird seed will you plant?",
+  "Let’s go down the weird treehole 🕳️🌲",
+  "Search your future memory 🔁",
+  "Spin your cosmic yarn 🧶",
+  "Tease the fates 🔮",
+  "Turn your brain upside-down 🤹",
+  "Embrace your silly side 🦄",
+  "Spoil your curiosity 🍿",
+  "Unlock the hidden door 🗝️",
+  "Tiptoe through your daydreams 💭",
+  "Flirt with chaos 🌀",
+  "Brew a new obsession ☕",
+  "Travel to Idea-land ✈️",
+  "Swing from branch to branch 🙉",
+  "Discover whats possible 🔍",
+  "lets get funky 🪩🕺",
+];
 
-// --- Constants ---
-const funSearchMessages = [ "🌳 What's growing today?", "Search Treehouse", "✨ Start a new branch", "Find your next idea 💡", "🔍 Follow a hunch", "Dig into something weird 🕳️", "🌱 Just plant it", "Remix the internet 🎨", "Search by vibe, not word", "📡 What's trending in the forest?", "🍄 Explore something cool", "Search the roots of something bigger", "Follow a branch of thought 🌿", "📖 Make a little internet history", "Plant your curiosity 🌱", "Find an origin story 🔗", "Look for seeds or trees 🌲", "✨ Discover creative roots", "Trace the weirdest path", "Search an idea’s family tree 👀", "Click a seed, grow a forest", "🍞 Find the original loaf (meme fans know)", "🧠 Add your brain to the mix", "Feed the TreeHouse", "Tap into the underground 🌍", "Search backwards before forwards ⏳", "Remix with respect 🔁", "🎥 Search ideas, not influencers", "No FYP here. Just roots.", "🍃 Follow what feels right", "Look for ghost content 👻", "📍Trace where it started", "Don’t scroll. Create.", "🌍 See what others have planted", "✨ Join the chain of inspiration", "Start something nobody asked for", "🙃 Break the algorithm gently", "Explore what almost got lost", "📎 Look for the strange but true", "🧩 Search the fragments of something bigger", "Search by feeling, not filter", "Catch an idea mid-bloom 🌸", "Pull on a creative thread 🧵", "🛠️ Build something from someone else’s spark", "Uncover the first spark 🔥", "Branch where you want. Nobody’s watching 👁️", "What lives in the Tree today?", "No gatekeepers here 🚪", "Add to the timeline 🌀", "🌲 Where do you want to grow?", "Search softly and carry a big branch", "Not trending. Just true.", "💫 Search the multiverse of creativity", "Chase a trail of breadcrumbs 🥖" ];
-const getRandomPlaceholder = (current?: string): string => { let next = current; while (next === current && funSearchMessages.length > 1) { next = funSearchMessages[Math.floor(Math.random() * funSearchMessages.length)]; } return next || "Search Treehouse..."; };
+const pastelGlowColors = [
+  "#F9A8D4", // Pink
+  "#93C5FD", // Blue
+  "#6EE7B7", // Green
+  "#FDBA74", // Orange
+  "#C4B5FD", // Purple
+];
 
-// --- Component Definition ---
-export default function Header({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (value: boolean) => void; }) {
-  // --- State ---
+function getRandomPlaceholder(current?: string): string {
+  let next = current;
+  while (next === current && funSearchMessages.length > 1) {
+    next = funSearchMessages[Math.floor(Math.random() * funSearchMessages.length)];
+  }
+  return next || "Search Treehouse...";
+}
+
+export default function Header({
+  darkMode,
+  setDarkMode,
+}: {
+  darkMode: boolean;
+  setDarkMode: (value: boolean) => void;
+}) {
   const [scrollY, setScrollY] = useState(0);
   const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // Keep if LoginModal is used
-  const [searchPlaceholder, setSearchPlaceholder] = useState(() => getRandomPlaceholder());
-  const [heroInputFocused, setHeroInputFocused] = useState(false);
+
+  // Hero input
   const [heroInputValue, setHeroInputValue] = useState("");
-  const [stickyInputFocused, setStickyInputFocused] = useState(false);
+  const [heroInputFocused, setHeroInputFocused] = useState(false);
+  const [heroHoverColor, setHeroHoverColor] = useState<string | null>(null);
+
+  // Sticky input
   const [stickyInputValue, setStickyInputValue] = useState("");
+  const [stickyInputFocused, setStickyInputFocused] = useState(false);
+  const [stickyHoverColor, setStickyHoverColor] = useState<string | null>(null);
+
+  // Placeholder
+  const [searchPlaceholder, setSearchPlaceholder] = useState(() => getRandomPlaceholder());
   const [isClient, setIsClient] = useState(false);
 
-  // --- Effects ---
-  useEffect(() => { // Set isClient after mount
-    setIsClient(true);
-  }, []);
+  // NextAuth session
+  const { data: session } = useSession();
 
-  useEffect(() => { // Placeholder rotation (30 seconds)
+  // On client
+  useEffect(() => setIsClient(true), []);
+
+  // Cycle placeholders if not typing
+  useEffect(() => {
     if (isClient) {
       const intervalId = setInterval(() => {
-        let currentActiveElement = null;
+        let currentActiveElement: Element | null = null;
         try {
           currentActiveElement = document.activeElement;
-        // FIX: Changed catch(e) to catch as 'e' was unused
-        } catch {} // Ignore error if activeElement is inaccessible
-        if (!currentActiveElement || (currentActiveElement.tagName !== 'INPUT')) {
-             setSearchPlaceholder(prev => getRandomPlaceholder(prev));
+        } catch {}
+        if (!currentActiveElement || currentActiveElement.tagName !== "INPUT") {
+          setSearchPlaceholder((prev) => getRandomPlaceholder(prev));
         }
-      }, 30000);
+      }, 45000);
+
       return () => clearInterval(intervalId);
     }
     return () => {};
   }, [isClient]);
 
-  useEffect(() => { // Scroll tracking
-    if (typeof window !== 'undefined') { setScrollY(window.scrollY); }
-    const handleScroll = () => setScrollY(window.scrollY);
+  // Track scroll for sticky bar
+  useEffect(() => {
+    const handleScroll = () => {
+      if (typeof window !== "undefined") setScrollY(window.scrollY);
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // initial load
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // --- Calculated Values ---
   const scrolledDown = scrollY > 80;
 
-  // --- Icon Data ---
+  // Hover logic for hero
+  const handleHeroHoverStart = () => {
+    const color = pastelGlowColors[Math.floor(Math.random() * pastelGlowColors.length)];
+    setHeroHoverColor(color);
+  };
+  const handleHeroHoverEnd = () => {
+    setHeroHoverColor(null);
+  };
+
+  // Hover logic for sticky
+  const handleStickyHoverStart = () => {
+    const color = pastelGlowColors[Math.floor(Math.random() * pastelGlowColors.length)];
+    setStickyHoverColor(color);
+  };
+  const handleStickyHoverEnd = () => {
+    setStickyHoverColor(null);
+  };
+
+  // Nav icons
   const navIcons = [
-    { name: 'seed', icon: FiPlusCircle, action: () => setIsSeedModalOpen(true) },
-    { name: 'leaf', icon: FiGitBranch, action: () => console.log('leaf clicked') },
-    { name: 'tree', icon: FiAperture, action: () => console.log('tree clicked') },
-    { name: 'moon', icon: FiMoon, action: () => setDarkMode(!darkMode) }
+    {
+      name: "seed",
+      src: "/icons/seed.png",
+      white: "/icons/seed-white.png",
+      action: () => setIsSeedModalOpen(true),
+    },
+    {
+      name: "leaf",
+      src: "/icons/leaf.png",
+      white: "/icons/leaf-white.png",
+      action: () => console.log("leaf clicked"),
+    },
+    {
+      name: "tree",
+      src: "/icons/tree.png",
+      white: "/icons/tree-white.png",
+      action: () => console.log("tree clicked"),
+    },
+    {
+      name: "moon",
+      src: "/icons/moon.png",
+      white: "/icons/moon-white.png",
+      action: () => setDarkMode(!darkMode),
+    },
   ];
 
-  // --- Component Return ---
   return (
     <>
-      {/* Fixed Auth Control - Ensure AuthControl component exists and is imported */}
-      <div className="fixed top-4 left-4 z-[1001]">
-        <AuthControl />
+      {/*
+        HERO SECTION
+        Big logo, big search, big icons,
+        plus top-right sign-in
+      */}
+      <div className="fixed top-4 right-6 z-[1001] flex items-center gap-2">
+        {!session && (
+          <span className="text-[#696e4a] text-sm font-semibold hidden sm:inline">
+            Sign Up / Login
+          </span>
+        )}
+        {/* Hero profile icon: w-12 h-12, iconSize=32 */}
+        <AuthControl buttonSize="w-12 h-12" iconSize={32} />
       </div>
 
-      {/* Hero Header */}
       <div className="relative w-full z-40 overflow-hidden">
         {darkMode && (
           <>
@@ -95,107 +183,179 @@ export default function Header({ darkMode, setDarkMode }: { darkMode: boolean; s
             <div className="absolute inset-0 z-10 bg-gradient-to-b from-[#111] via-transparent to-[#111] pointer-events-none" />
           </>
         )}
-        <div className={`relative z-20 flex flex-col items-center pt-16 pb-8 transition-colors duration-500 ease-in-out ${ darkMode ? "bg-[#111]/70" : "bg-[#ece1d6]" }`}>
-          {/* Logo */}
-          <div className={`relative w-[300px] sm:w-[400px] h-[150px] sm:h-[200px] mb-4 transition-opacity duration-700 ease-in-out opacity-100 translate-y-0`}>
-            <Image src={darkMode ? "/logo-white.png" : "/logo.png"} alt="PromptTreehouse Logo" fill sizes="(max-width: 640px) 300px, 400px" className="object-contain" priority />
+
+        <div
+          className={`relative z-20 flex flex-col items-center pt-16 pb-8 transition-colors duration-500 ease-in-out ${
+            darkMode ? "bg-[#111]/70" : "bg-[#ece1d6]"
+          }`}
+        >
+          {/* Large center logo */}
+          <div className="relative w-[300px] sm:w-[400px] h-[150px] sm:h-[200px] mb-4">
+            <Image
+              src={darkMode ? "/logo-white.png" : "/logo.png"}
+              alt="TreeHouse site logo"
+              fill
+              sizes="(max-width: 640px) 300px, (max-width: 1024px) 400px"
+              className="object-contain"
+              priority
+            />
           </div>
-          {/* Hero Search */}
-          <div className="relative w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl">
-             <input
-               type="text"
-               value={heroInputValue}
-               onChange={(e) => setHeroInputValue(e.target.value)}
-               onFocus={() => setHeroInputFocused(true)}
-               onBlur={() => setHeroInputFocused(false)}
-               className={`w-full rounded-full px-4 py-2 text-center border border-gray-300 dark:border-gray-500 bg-white text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${heroInputFocused && !heroInputValue ? 'caret-transparent' : 'caret-black dark:caret-white'}`}
-             />
-             {isClient && (
-               <AnimatePresence mode="wait">
-                 {heroInputValue === '' && (
-                   <motion.span
-                     key={searchPlaceholder}
-                     className="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none text-base"
-                     initial={{ opacity: 0 }}
-                     animate={{ opacity: 1 }}
-                     exit={{ opacity: 0 }}
-                     transition={{ duration: 0.5, ease: "easeInOut" }}
-                   >
-                     {searchPlaceholder}
-                   </motion.span>
-                 )}
-               </AnimatePresence>
-             )}
-          </div>
-          {/* Hero Icons */}
-          <div className="mt-4 flex gap-6 justify-center items-center flex-wrap">
-            {navIcons.map(({ name, icon: Icon, action }) => (
-              <button key={name} className={`w-10 h-10 hover:-translate-y-1 transition-transform flex items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/10 ${ name === "seed" ? "hover:scale-110" : "" }`} onClick={action} aria-label={`${name} action`} title={name.charAt(0).toUpperCase() + name.slice(1)} >
-                <Icon size={24} className={darkMode ? "text-white" : "text-black"} />
+
+          {/* Hero input with pastel glow */}
+          <motion.div
+            className="relative w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl mt-4 rounded-full"
+            onHoverStart={handleHeroHoverStart}
+            onHoverEnd={handleHeroHoverEnd}
+            style={{
+              boxShadow: heroHoverColor ? `0 0 15px 3px ${heroHoverColor}` : "none",
+              transition: "box-shadow 0.3s ease",
+            }}
+          >
+            <input
+              type="text"
+              value={heroInputValue}
+              onChange={(e) => setHeroInputValue(e.target.value)}
+              onFocus={() => setHeroInputFocused(true)}
+              onBlur={() => setHeroInputFocused(false)}
+              className={`w-full rounded-full px-4 py-3 text-center border border-gray-300 dark:border-gray-500 bg-white text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#696e4a] text-lg ${
+                heroInputFocused && !heroInputValue ? "caret-transparent" : "caret-black dark:caret-white"
+              }`}
+            />
+            {isClient && (
+              <AnimatePresence mode="wait">
+                {heroInputValue === "" && (
+                  <motion.span
+                    key={searchPlaceholder}
+                    className="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none text-lg"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {searchPlaceholder}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            )}
+          </motion.div>
+
+          {/* Hero icons row */}
+          <div className="mt-6 flex gap-6 justify-center items-center flex-wrap">
+            {navIcons.map(({ name, src, white, action }) => (
+              <button
+                key={name}
+                onClick={action}
+                className="w-12 h-12 hover:-translate-y-1 transition-transform flex items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/10"
+                aria-label={name}
+              >
+                <Image src={darkMode ? white : src} alt={name} width={36} height={36} />
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Sticky Header */}
-      <div className={`fixed top-0 left-0 w-full z-[999] px-4 sm:px-6 py-2 transition-all duration-300 ease-in-out backdrop-blur-xl shadow-md bg-white/80 dark:bg-white/80 ${ !scrolledDown ? "opacity-0 -translate-y-full pointer-events-none" : "opacity-100 translate-y-0" }`} >
-        <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-3 h-12 pl-16">
-          {/* Center Group: Search + Icons */}
-          <div className="flex-1 flex justify-center items-center gap-4 mx-2 overflow-hidden">
-            {/* Sticky Search */}
-            <div className="relative w-full max-w-xs">
+      {/*
+        STICKY BAR
+        Above hero icon => bigger z-index
+        Transparent = #111/30 or white/30
+        Logo bigger, search bar wider,
+        profile icon same size as hero
+      */}
+      <div
+        className={`fixed top-0 left-0 w-full py-2 transition-all duration-300 ease-in-out backdrop-blur-xl shadow-md
+          ${!scrolledDown ? "opacity-0 -translate-y-full pointer-events-none" : "opacity-100 translate-y-0"}
+          ${
+            darkMode
+              ? "bg-[#111]/30"
+              : "bg-white/30"
+          }
+          // bump z-index above the hero icon (z-[1001])
+        z-[1002]
+        `}
+      >
+        <div className="flex items-center w-full h-16 px-6 justify-between">
+          {/* Left: bigger logo e.g. w-40 h-12 */}
+          <div className="relative w-[160px] h-[50px]">
+            <Image
+              src={darkMode ? "/logo-white.png" : "/logo.png"}
+              alt="TreeHouse small logo"
+              fill
+              className="object-contain"
+            />
+          </div>
+
+          {/* Center: search + icons side-by-side */}
+          <div className="flex items-center gap-4">
+            <motion.div
+              className="relative rounded-full"
+              onHoverStart={handleStickyHoverStart}
+              onHoverEnd={handleStickyHoverEnd}
+              style={{
+                boxShadow: stickyHoverColor ? `0 0 15px 3px ${stickyHoverColor}` : "none",
+                transition: "box-shadow 0.3s ease",
+              }}
+            >
+              {/* Wider search bar: 240px on small, 300px on sm */}
               <input
-                 type="text"
-                 value={stickyInputValue}
-                 onChange={(e) => setStickyInputValue(e.target.value)}
-                 onFocus={() => setStickyInputFocused(true)}
-                 onBlur={() => setStickyInputFocused(false)}
-                 className={`w-full rounded-full px-4 py-2 text-center border border-gray-300 dark:border-gray-400 bg-white text-black shadow-sm focus:outline-none focus:ring-1 focus:ring-green-500 text-sm ${stickyInputFocused && !stickyInputValue ? 'caret-transparent' : 'caret-black'}`}
+                type="text"
+                value={stickyInputValue}
+                onChange={(e) => setStickyInputValue(e.target.value)}
+                onFocus={() => setStickyInputFocused(true)}
+                onBlur={() => setStickyInputFocused(false)}
+                className="w-[240px] sm:w-[300px] rounded-full px-4 py-2.5 text-center border border-gray-300 dark:border-gray-400 bg-white text-black shadow-sm focus:outline-none focus:ring-1 focus:ring-[#696e4a] text-sm"
               />
-               {isClient && (
-                 <AnimatePresence mode="wait">
-                   {stickyInputValue === '' && (
-                     <motion.span
-                       key={searchPlaceholder + '-sticky'}
-                       className="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none text-sm"
-                       initial={{ opacity: 0 }}
-                       animate={{ opacity: 1 }}
-                       exit={{ opacity: 0 }}
-                       transition={{ duration: 0.5, ease: "easeInOut" }}
-                     >
-                       {searchPlaceholder}
-                     </motion.span>
-                   )}
-                 </AnimatePresence>
-               )}
-            </div>
-            {/* Sticky Icons (Desktop only) */}
-            <div className="hidden md:flex gap-3 items-center">
-              {navIcons.map(({ name, icon: Icon, action }) => (
-                <button key={name + '-sticky'} className={`w-8 h-8 hover:-translate-y-1 transition-transform flex items-center justify-center rounded-full hover:bg-gray-500/20`} onClick={action} aria-label={`${name} action`} title={name.charAt(0).toUpperCase() + name.slice(1)}>
-                   <Icon size={20} className="text-gray-700" />
+              {isClient && (
+                <AnimatePresence mode="wait">
+                  {stickyInputValue === "" && (
+                    <motion.span
+                      key={searchPlaceholder + "-sticky"}
+                      className="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none text-sm"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      {searchPlaceholder}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              )}
+            </motion.div>
+
+            {/* Sticky icons */}
+            <div className="flex gap-3 items-center">
+              {navIcons.map(({ name, src, white, action }) => (
+                <button
+                  key={name + "-sticky"}
+                  onClick={action}
+                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-500/20 transition"
+                >
+                  <Image src={darkMode ? white : src} alt={name} width={28} height={28} />
                 </button>
               ))}
             </div>
           </div>
-          {/* Right Item: Settings (Desktop only) */}
-          <div className="hidden md:flex flex-shrink-0">
-            <button onClick={() => console.log("Settings clicked")} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-500/20 transition-colors" aria-label="Settings" title="Settings" >
-              <FiSettings size={24} className="text-gray-700" />
-            </button>
+
+          {/* Right: same size as hero = w-12 h-12, iconSize=32 */}
+          <div className="flex items-center gap-2">
+            {!session && (
+              <span className="text-[#696e4a] text-sm font-semibold hidden sm:inline">
+                Sign Up / Login
+              </span>
+            )}
+            <AuthControl buttonSize="w-12 h-12" iconSize={32} />
           </div>
-          {/* Mobile Placeholder (for justify-between) */}
-          <div className="md:hidden flex-shrink-0 w-10 h-10"></div>
         </div>
       </div>
 
       {/* Modals */}
-      {/* Ensure CreateSeedModal and LoginModal components are correctly implemented */}
-      <CreateSeedModal isOpen={isSeedModalOpen} onClose={() => setIsSeedModalOpen(false)} darkMode={darkMode} />
-      {/* Conditionally render LoginModal only if needed, or remove if AuthControl handles login */}
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
-
+      <CreateSeedModal
+        isOpen={isSeedModalOpen}
+        onClose={() => setIsSeedModalOpen(false)}
+        darkMode={darkMode}
+      />
+      <LoginModal isOpen={false} onClose={() => {}} />
     </>
   );
 }

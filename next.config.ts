@@ -1,24 +1,24 @@
-// next.config.ts
-
 import type { NextConfig } from 'next';
 
-// Use TypeScript's type annotation directly
 const nextConfig: NextConfig = {
+  productionSourceMaps: false, // ← disables sourcemap generation in prod
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
-        // Existing entry for Google avatars
         protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
+        hostname: 'lh3.googleusercontent.com', // Google avatars
       },
       {
-        // --- ADD THIS NEW ENTRY for Picsum ---
         protocol: 'https',
         hostname: 'picsum.photos',
       },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com', // ✅ Firebase images
+      },
     ],
   },
-  // Keep any other existing configurations you might have
 };
 
 export default nextConfig;
