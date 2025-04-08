@@ -1,141 +1,68 @@
-""// src/app/profile/page.tsx
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import CardGrid from '@/components/CardGrid';
-import { SeedCardData } from '@/components/SeedCard';
+import { useEffect, useRef, useState, useCallback } from "react";
+import Header from "@/components/Header";
+import CardGrid from "@/components/CardGrid";
+import { SeedCardData } from "@/components/SeedCard";
 
-const mockPosts: SeedCardData[] = [
-  { id: 1, type: 'square', seed: '123', imageUrl: '/images/example1.jpg', hits: 409, branches: 12 },
-  { id: 2, type: 'square', seed: '456', imageUrl: '/images/example2.jpg', hits: 206, branches: 9 },
-  { id: 3, type: 'square', seed: '789', imageUrl: '/images/example3.jpg', hits: 123, branches: 5 },
-  { id: 4, type: 'phone', seed: '999', imageUrl: '/images/example4.jpg', hits: 312, branches: 20 },
-];
+function getRandomType(): SeedCardData["type"] {
+  const types = ["square", "wide", "classic", "phone"] as const;
+  return types[Math.floor(Math.random() * types.length)];
+}
 
-const sanitizeEmail = (email?: string) =>
-  email?.replace(/[^a-zA-Z0-9]/g, '_') || 'guest';
+function generateMockCards(count: number, startId = 0): SeedCardData[] {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `${startId + i + 1}`,
+    seed: `Seed ${startId + i + 1}`,
+    imageUrl: `https://picsum.photos/seed/${startId + i}/600/400`,
+    type: getRandomType(),
+    hits: Math.floor(Math.random() * 1000),
+    branches: Math.floor(Math.random() * 50),
+  }));
+}
 
-const ProfilePage = () => {
-  const { data: session } = useSession();
-  const userId = sanitizeEmail(session?.user?.email);
+export default function HomePage() {
+  const [cards, setCards] = useState<SeedCardData[]>([]);
+  const [page, setPage] = useState(0);
+  const observer = useRef<IntersectionObserver | null>(null);
 
-  const [bannerUrl, setBannerUrl] = useState<string>('');
-  const [isLoadingBanner, setIsLoadingBanner] = useState(true);
-  const [hovering, setHovering] = useState(false);
+  const loadMoreCards = useCallback(() => {
+    const newCards = generateMockCards(20, page * 20);
+    setCards((prev) => [...prev, ...newCards]);
+    setPage((prev) => prev + 1);
+  }, [page]);
+
+  const lastCardRef = useCallback((node: HTMLDivElement) => {
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadMoreCards();
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  }, [loadMoreCards]);
 
   useEffect(() => {
-    async function loadBanner() {
-      if (!userId) return;
-      setIsLoadingBanner(true);
-      try {
-        const res = await fetch(`/api/banner?user=${userId}`);
-        const json = await res.json();
-        if (json?.url) {
-          setBannerUrl(json.url);
-          console.log('📸 Loaded banner URL:', json.url);
-        } else {
-          throw new Error('No banner found');
-        }
-      } catch (err) {
-        setBannerUrl('/images/default-banner.jpg');
-        console.warn('❗ Using fallback banner');
-      }
-      setIsLoadingBanner(false);
-    }
+    loadMoreCards(); // initial load
+  }, []);
 
-    loadBanner();
-  }, [userId]);
-
-  const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userId) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('user', userId);
-
-    try {
-      const res = await fetch('/api/upload-banner', {
-        method: 'POST',
-        body: formData,
-      });
-      const json = await res.json();
-      if (json?.url) {
-        setBannerUrl(`${json.url}?t=${Date.now()}`);
-        console.log('✅ Banner updated:', json.url);
-      } else {
-        throw new Error('Upload failed');
-      }
-    } catch (err) {
-      console.error('❌ Upload error:', err);
-    }
+  const handleImageClick = (url: string) => {
+    console.log("Clicked image:", url);
   };
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-black">
-      {/* Banner */}
-      <div
-        className="w-full h-80 relative flex items-center justify-center"
-        onMouseEnter={() => setHovering(true)}
-        onMouseLeave={() => setHovering(false)}
-      >
-        {isLoadingBanner ? (
-          <div className="w-full h-full animate-pulse bg-neutral-200 dark:bg-neutral-800" />
-        ) : (
-          <img
-            src={bannerUrl}
-            alt="Profile Banner"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              console.warn('❗ Failed to load banner. Using fallback.');
-              e.currentTarget.src = '/images/default-banner.jpg';
-            }}
-          />
-        )}
-
-        {hovering && (
-          <label className="absolute bottom-4 bg-white text-black px-3 py-1 rounded cursor-pointer shadow text-sm z-10">
-            Upload Banner
-            <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
-          </label>
-        )}
+    <main className="bg-white text-black transition-colors min-h-screen">
+      <Header />
+      <div className="pt-[10px] pb-12 px-2 sm:px-4 md:px-6">
+        <CardGrid
+          cards={cards}
+          darkMode={false}
+          onImageClick={handleImageClick}
+          lastCardRef={lastCardRef}
+        />
       </div>
-
-      {/* Header */}
-      <div className="flex items-center px-6 py-6 space-x-6">
-        <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-md bg-neutral-200">
-          <img
-            src={session?.user?.image || '/images/default-pfp.jpg'}
-            alt="Profile"
-            className="object-cover w-full h-full"
-            onError={(e) => {
-              console.warn('❗ Failed to load profile image.');
-              e.currentTarget.src = '/images/default-pfp.jpg';
-            }}
-          />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-black dark:text-white">
-            @{session?.user?.name || 'username'}
-          </h2>
-          <div className="text-sm mt-1 flex gap-2 text-black dark:text-white">
-            <span>🌱 {mockPosts.length} hits</span>
-            <span>🌿 12</span>
-            <span>🌳 3</span>
-          </div>
-          <button className="mt-2 px-4 py-1 text-sm bg-white text-pink-600 rounded-full shadow">
-            🌸 Pick (14)
-          </button>
-        </div>
-      </div>
-
-      {/* Grid */}
-      <div className="px-4 md:px-8 mt-12">
-        <CardGrid cards={[...mockPosts]} darkMode={false} onImageClick={() => {}} />
-      </div>
-    </div>
+    </main>
   );
-};
-
-export default ProfilePage;
+}

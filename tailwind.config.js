@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: "class", // ✅ This line lets YOU control dark mode manually
   content: [
     "./src/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
@@ -8,7 +9,7 @@ module.exports = {
   theme: {
     extend: {
       borderWidth: {
-        '0.5': '0.5px', // ✅ Custom border width
+        '0.5': '0.5px',
       },
     },
   },

@@ -1,11 +1,14 @@
-// src/app/api/uploadthing/core.ts
-import { createRouteHandler } from "uploadthing/next";
-import { ourFileRouter } from "@/lib/uploadthing";
+import { createUploadthing, type FileRouter } from "uploadthing";
 
-export const { GET, POST } = createRouteHandler({
-  router: ourFileRouter,
-});
+const f = createUploadthing();
 
+export const ourFileRouter = {
+  bannerUploader: f({ image: { maxFileSize: "4MB" } })
+    .middleware(() => ({}))
+    .onUploadComplete(({ file }) => {
+      console.log("✅ Uploaded:", file.url);
+    }),
+} satisfies FileRouter;
 
-
+export type OurFileRouter = typeof ourFileRouter;
 

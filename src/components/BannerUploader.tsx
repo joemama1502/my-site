@@ -1,17 +1,23 @@
 'use client';
 
-import { UploadButton } from "uploadthing/react";
-import type { OurFileRouter } from "@/app/api/uploadthing/core";
+import { UploadButton } from "@/lib/uploadthing";
 
-export default function BannerUploader({ onUpload }: { onUpload: (url: string) => void }) {
+export default function BannerUploader() {
   return (
-    <UploadButton<OurFileRouter>
-      endpoint="bannerUploader"
-      onClientUploadComplete={(res) => {
-        const url = res?.[0]?.url;
-        if (url) onUpload(url);
-      }}
-      onUploadError={(e) => alert(`Upload failed: ${e.message}`)}
-    />
+    <div className="p-4">
+      <p>Upload your banner here:</p>
+      <UploadButton
+        endpoint="bannerUploader"
+        onClientUploadComplete={(res) => {
+          console.log("✅ Upload complete:", res);
+          alert("Uploaded!");
+        }}
+        onUploadError={(e) => {
+          console.error("❌ Upload failed:", e.message);
+          alert(`Upload failed: ${e.message}`);
+        }}
+      />
+    </div>
   );
 }
+
