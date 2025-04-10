@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 import { uploadImage, getImageUrl, updateUserProfile } from '../lib/storage';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { createClient } from '@supabase/supabase-js';
 
-export default function ProfilePicUploader() {
+export default function ProfilePicUploader({supabase}: {supabase: ReturnType<typeof createClient>}) {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -15,19 +13,23 @@ export default function ProfilePicUploader() {
 
   useEffect(() => {
     const fetchCurrentUserProfilePic = async () => {
-      const user = await supabase.auth.getUser();
-      if (user.data && user.data.user) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('pfp')
-          .eq('id', user.data.user.id);
-        if (error) {
-          setError(error.message);
-        }
-        if (data && data[0].pfp) {
-          const url = await getImageUrl(supabase, data[0].pfp);
-          setCurrentImageUrl(url);
-        }
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error("Error fetching user:", error);
+        return;
+      }
+      if (!data?.user) {
+        console.log("No user session found.");
+        return;
+      }
+
+      const { data: profileData, error: profileError } = await supabase
+        .from('users')
+        .select('pfp')
+        .eq('id', data.user.id)
+        .single(); // Use single() to expect only one row
+      if (profileData?.pfp) {
+        setCurrentImageUrl(profileData.pfp);
       }
     };
 
@@ -52,13 +54,7 @@ export default function ProfilePicUploader() {
     setError(null);
 
     try {
-      const path = await uploadImage(supabase, file, 'profilepic');
-      const user = await supabase.auth.getUser();
-      if (!user.data || !user.data.user) {
-        throw new Error('Not authenticated');
-      }
-      await updateUserProfile(supabase, user.data.user.id, path);
-      const newUrl = await getImageUrl(supabase, path);
+      const newUrl = await uploadImage(file, 'profilepic');
       setCurrentImageUrl(newUrl);
       setPreviewUrl(null);
     } catch (err) {
@@ -67,6 +63,8 @@ export default function ProfilePicUploader() {
       } else {
         setError('An unexpected error occurred.');
       }
+    } finally {
+      if (currentImageUrl) await updateUserProfile(supabase, currentImageUrl)
     } finally {
       setIsLoading(false);
     }

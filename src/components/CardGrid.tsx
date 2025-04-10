@@ -25,7 +25,7 @@ const CardGrid: React.FC<CardGridProps> = ({ cards, onImageClick, lastCardRef })
   return (
     <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 px-4 sm:px-8 space-y-4 bg-white">
       {cards.map((card, index) => (
-        <div 
+        <div
           key={card.id} 
           ref={index === cards.length - 1 ? lastCardRef : undefined}
           className="break-inside-avoid"

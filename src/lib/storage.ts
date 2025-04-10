@@ -1,99 +1,75 @@
-import { supabase, STORAGE_BUCKET } from './supabase';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { v2 as cloudinary } from 'cloudinary';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-export type ImageType = 'banner' | 'profile-pic';
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
 
-function sanitizeEmail(email: string): string {
-  return email.replace('@', '_').replace(/\./g, '_');
-}
+const getUserId = async (supabaseClient: SupabaseClient) => {
+  const user = await supabaseClient.auth.getUser();
+  if (!user.data || !user.data.user) {
+    throw new Error('Not authenticated');
+  }
+  return user.data.user.id;
+};
 
 export async function uploadImage(
   supabaseClient: SupabaseClient,
   file: File,
-  userId: string,
-  type: ImageType
-): Promise<string> {
+  type: 'profilepic' | 'banner'
+): Promise<string | null> {
   try {
-    const sanitizedId = sanitizeEmail(userId);
-    const filePath = `${type}s/${sanitizedId}/${file.name}`;
+    const userId = await getUserId(supabaseClient);
+    const timestamp = Date.now();
+    const folder = `profile/${userId}/${type}`;
 
-    const { data, error } = await supabaseClient.storage
-      .from(STORAGE_BUCKET)
-      .upload(filePath, file, {
-        upsert: true,
-        contentType: file.type,
-      });
+    const uploadResult = await cloudinary.uploader.upload(
+      URL.createObjectURL(file),
+      {
+        folder: folder,
+        public_id: `${type}_${timestamp}`,
+        upload_preset: 'default_preset',
+      }
+    );
 
-    if (error) {
-      console.error('Upload error:', error.message);
-      throw error;
-    }
-
-    if (!data?.path) {
-      throw new Error('Upload successful but no path returned');
-    }
-
-    const { data: publicUrlData } = supabaseClient.storage
-      .from(STORAGE_BUCKET)
-      .getPublicUrl(data.path);
-    if (!publicUrlData.publicUrl) {
-      throw new Error('No public url returned');
-    }
-    return publicUrlData.publicUrl;
+    return uploadResult.secure_url;
   } catch (error) {
-    console.error('Error in uploadImage:', error);
+    console.error('Cloudinary upload error:', error);
     throw error;
   }
 }
 
 export async function getImageUrl(
-  supabaseClient: SupabaseClient,
-  userId: string,
-  type: ImageType
+  _supabaseClient: SupabaseClient,
+  type: 'profilepic' | 'banner'
 ): Promise<string | null> {
   try {
-    const sanitizedId = sanitizeEmail(userId);
-    const { data: files, error } = await supabaseClient.storage
-      .from(STORAGE_BUCKET)
-      .list(`${type}s/${sanitizedId}`);
-
-    if (error) {
-      console.error('Error listing files:', error.message);
-      throw error;
-    }
-
-    if (!files || files.length === 0) {
-      console.log('No images found for user');
-      return null;
-    }
-
-    const latestFile = files[files.length - 1];
-    const { data: publicUrlData } = supabaseClient.storage
-      .from(STORAGE_BUCKET)
-      .getPublicUrl(`${type}s/${sanitizedId}/${latestFile.name}`);
-      if (!publicUrlData.publicUrl) {
-        throw new Error('No public url returned');
-      }
-    return publicUrlData.publicUrl;
+    // Since the URL is directly returned from uploadImage, this function might not be needed.
+    // You might directly use the URL stored in the database.
+    return null;
   } catch (error) {
-    console.error('Error in getImageUrl:', error);
+    console.error('Error getting image URL:', error);
     throw error;
   }
 }
 
 export async function updateUserProfile(
   supabaseClient: SupabaseClient,
-  userId: string,
-  profilePicUrl: string
+  profilePicUrl: string,
+  type: 'profilepic' | 'banner'
 ): Promise<void> {
   try {
-    const { error } = await supabaseClient
-      .from('users')
-      .update({ pfp: profilePicUrl })
-      .eq('id', userId);
+    const userId = await getUserId(supabaseClient);
+    const { error } = await supabaseClient.from('users').upsert({
+      id: userId,
+      [type]: profilePicUrl,
+    });
 
     if (error) {
-      console.error('Error updating user profile:', error.message);
+      console.error('Supabase update error:', error);
       throw error;
     }
   } catch (error) {
