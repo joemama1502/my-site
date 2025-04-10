@@ -1,20 +1,28 @@
-// src/app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
-// Import the options from your new lib file
-import { authOptions } from "@/lib/authOptions"; // Adjust path if necessary ('@/' assumes path alias is set up)
+import GoogleProvider from "next-auth/providers/google";
+import { SupabaseAdapter } from "@auth/supabase-adapter";
+import { createClient } from "@supabase/supabase-js";
+import { createRouteHandler } from "@auth/supabase";
 
-// Check environment variables
-if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.NEXTAUTH_SECRET) {
-  console.error("Missing environment variables in [...nextauth]/route.ts:", {
-    googleClientId: !!process.env.GOOGLE_CLIENT_ID,
-    googleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-    nextAuthSecret: !!process.env.NEXTAUTH_SECRET,
-  });
-  throw new Error("Missing required environment variables");
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Initialize the NextAuth handler using the IMPORTED options
-const handler = NextAuth(authOptions);
+const authService = createRouteHandler({ supabaseUrl, supabaseKey: supabaseAnonKey, adapter: SupabaseAdapter });
 
-// Export the handler for GET and POST requests
-export { handler as GET, handler as POST };
+export const {
+  handlers: { GET, POST },
+  auth,
+  signIn,
+  signOut,
+} = NextAuth({
+  adapter: authService({
+    supabaseClient: supabase,
+    db: supabase
+  }),
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
+});

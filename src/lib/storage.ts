@@ -1,5 +1,5 @@
-import { getSession } from 'next-auth/react';
-import { getSupabaseClient, STORAGE_BUCKET } from './supabase';
+import { supabase, STORAGE_BUCKET } from './supabase';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export type ImageType = 'banner' | 'profile-pic';
 
@@ -7,26 +7,17 @@ function sanitizeEmail(email: string): string {
   return email.replace('@', '_').replace(/\./g, '_');
 }
 
-export async function uploadImage(file: File, userId: string, type: ImageType) {
+export async function uploadImage(
+  supabaseClient: SupabaseClient,
+  file: File,
+  userId: string,
+  type: ImageType
+): Promise<string> {
   try {
-    const session = await getSession();
-    if (!session?.user?.email) {
-      throw new Error('You must be logged in to upload images');
-    }
-
-    if (!session.user.supabaseToken) {
-      throw new Error('No Supabase token found in session');
-    }
-
-    const sanitizedId = sanitizeEmail(session.user.email);
+    const sanitizedId = sanitizeEmail(userId);
     const filePath = `${type}s/${sanitizedId}/${file.name}`;
-    console.log('Starting upload to:', filePath, 'Content-Type:', file.type);
 
-    // Get authenticated client
-    const supabase = await getSupabaseClient();
-
-    // Upload file to Supabase storage
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabaseClient.storage
       .from(STORAGE_BUCKET)
       .upload(filePath, file, {
         upsert: true,
@@ -35,9 +26,6 @@ export async function uploadImage(file: File, userId: string, type: ImageType) {
 
     if (error) {
       console.error('Upload error:', error.message);
-      if (error.message.includes('Permission denied')) {
-        throw new Error('Permission denied. Please check your authentication status.');
-      }
       throw error;
     }
 
@@ -45,47 +33,32 @@ export async function uploadImage(file: File, userId: string, type: ImageType) {
       throw new Error('Upload successful but no path returned');
     }
 
-    // Get the public URL
-    const { data: { publicUrl } } = supabase.storage
+    const { data: publicUrlData } = supabaseClient.storage
       .from(STORAGE_BUCKET)
       .getPublicUrl(data.path);
-
-    console.log('Upload successful, public URL:', publicUrl);
-    return publicUrl;
-
+    if (!publicUrlData.publicUrl) {
+      throw new Error('No public url returned');
+    }
+    return publicUrlData.publicUrl;
   } catch (error) {
     console.error('Error in uploadImage:', error);
     throw error;
   }
 }
 
-export async function getImageUrl(userId: string, type: ImageType) {
+export async function getImageUrl(
+  supabaseClient: SupabaseClient,
+  userId: string,
+  type: ImageType
+): Promise<string | null> {
   try {
-    const session = await getSession();
-    if (!session?.user?.email) {
-      throw new Error('You must be logged in to view images');
-    }
-
-    if (!session.user.supabaseToken) {
-      throw new Error('No Supabase token found in session');
-    }
-
-    const sanitizedId = sanitizeEmail(session.user.email);
-    console.log('Fetching images for:', sanitizedId, 'type:', type);
-
-    // Get authenticated client
-    const supabase = await getSupabaseClient();
-
-    // List files in the directory
-    const { data: files, error } = await supabase.storage
+    const sanitizedId = sanitizeEmail(userId);
+    const { data: files, error } = await supabaseClient.storage
       .from(STORAGE_BUCKET)
       .list(`${type}s/${sanitizedId}`);
 
     if (error) {
       console.error('Error listing files:', error.message);
-      if (error.message.includes('Permission denied')) {
-        throw new Error('Permission denied. Please check your authentication status.');
-      }
       throw error;
     }
 
@@ -94,17 +67,37 @@ export async function getImageUrl(userId: string, type: ImageType) {
       return null;
     }
 
-    // Get the most recent file
     const latestFile = files[files.length - 1];
-    const { data: { publicUrl } } = supabase.storage
+    const { data: publicUrlData } = supabaseClient.storage
       .from(STORAGE_BUCKET)
       .getPublicUrl(`${type}s/${sanitizedId}/${latestFile.name}`);
-
-    console.log('Found image URL:', publicUrl);
-    return publicUrl;
-
+      if (!publicUrlData.publicUrl) {
+        throw new Error('No public url returned');
+      }
+    return publicUrlData.publicUrl;
   } catch (error) {
     console.error('Error in getImageUrl:', error);
     throw error;
   }
-} 
+}
+
+export async function updateUserProfile(
+  supabaseClient: SupabaseClient,
+  userId: string,
+  profilePicUrl: string
+): Promise<void> {
+  try {
+    const { error } = await supabaseClient
+      .from('users')
+      .update({ pfp: profilePicUrl })
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error updating user profile:', error.message);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in updateUserProfile:', error);
+    throw error;
+  }
+}
