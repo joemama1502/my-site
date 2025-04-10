@@ -4,6 +4,7 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useTheme } from "next-themes";
 
 export type CardType = "square" | "wide" | "classic" | "phone";
 
@@ -16,13 +17,14 @@ export interface SeedCardData {
   branches: number;
 }
 
-interface SeedCardProps {
+export interface SeedCardProps {
   seed: SeedCardData;
   onImageClick: (imageUrl: string) => void;
+  priority?: boolean;
 }
 
 const pastelGlowColors = [
-  "#F9A8D4", "#93C5FD", "#6EE7B7", "#FDBA74", "#C4B5FD", "#FCD34D",
+  "#F9A8D4", "#93C5FD", "#6EE7B7", "#FDBA74", "#C4B5FD", "#FDE68A",
   "#FCA5A5", "#5EEAD4", "#A5F3FC", "#D8B4FE", "#FBCFE8", "#FDE68A",
   "#E0F2FE", "#F87171", "#86EFAC", "#BFDBFE"
 ];
@@ -37,9 +39,11 @@ const getAspectStyle = (type: CardType) => {
   }
 };
 
-export default function SeedCard({ seed, onImageClick }: SeedCardProps) {
+export default function SeedCard({ seed, onImageClick, priority = false }: SeedCardProps) {
   const [isHovering, setIsHovering] = useState(false);
   const glowColorRef = useRef<string | null>(null);
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const handleHoverStart = () => {
     const randomColor = pastelGlowColors[Math.floor(Math.random() * pastelGlowColors.length)];
@@ -54,7 +58,7 @@ export default function SeedCard({ seed, onImageClick }: SeedCardProps) {
   return (
     <motion.div
       layout
-      className="relative z-20 flex flex-col cursor-pointer p-1 md:p-[2px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a2a2a] transform shadow-none md:shadow-md"
+      className={`relative z-20 flex flex-col cursor-pointer p-1 md:p-[2px] rounded-xl border ${isDark ? 'border-gray-700 bg-[#2a2a2a]' : 'border-gray-200 bg-white'} transform shadow-none md:shadow-md`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
@@ -79,14 +83,15 @@ export default function SeedCard({ seed, onImageClick }: SeedCardProps) {
         transition={{ duration: 0.3, ease: "easeOut" }}
       />
 
-      <div className={`w-full overflow-hidden relative z-10 rounded-lg ${getAspectStyle(seed.type)}`}>
+      <div className={`relative overflow-hidden rounded-lg ${getAspectStyle(seed.type)}`}>
         <Image
           src={seed.imageUrl}
           alt={`Card image ${seed.seed}`}
           fill
           sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 20vw"
           className="object-cover transition-transform duration-300 ease-in-out"
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          priority={priority}
         />
         <div className="absolute bottom-1 left-1 md:bottom-1.5 md:left-1.5 z-10 text-xs text-gray-100 px-2 py-1 rounded-md [text-shadow:0_1px_1px_rgb(0_0_0_/_0.7)] pointer-events-none bg-gradient-to-t from-black/60 to-transparent">
           <span role="img" aria-label="hits">🌱</span> {seed.hits} hits

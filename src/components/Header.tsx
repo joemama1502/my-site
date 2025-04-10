@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 
 import CreateSeedModal from "./CreateSeedModal";
 import LoginModal from "./LoginModal";
@@ -14,14 +15,14 @@ const funSearchMessages = [
   "Plant your weirdest ideas 🌱",
   "Dig up something cool 🪄",
   "Enter the rabbit hole 🕳️",
-  "What’s blooming in your mind?",
+  "What's blooming in your mind?",
   "Summon something strange 🔮",
   "Find your creative frequency 💳",
   "Whistle to the void 🎶",
   "Scroll and grow 🌱",
   "Make some prompt magic ✨",
   "What weird seed will you plant?",
-  "Let’s go down the weird treehole 🕳️🌲",
+  "Let's go down the weird treehole 🕳️🌲",
   "Search your future memory 🔁",
   "Spin your cosmic yarn 🧶",
   "Tease the fates 🔮",
@@ -50,15 +51,11 @@ function getRandomPlaceholder(current?: string): string {
   return next || "Search Treehouse...";
 }
 
-export default function Header({
-  darkMode,
-  setDarkMode,
-}: {
-  darkMode: boolean;
-  setDarkMode: (value: boolean) => void;
-}) {
+export default function Header() {
   const [scrollY, setScrollY] = useState(0);
   const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
+  const { theme, setTheme, systemTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   const [heroInputValue, setHeroInputValue] = useState("");
   const [heroInputFocused, setHeroInputFocused] = useState(false);
@@ -72,8 +69,15 @@ export default function Header({
   const [isClient, setIsClient] = useState(false);
 
   const { data: session } = useSession();
+  
+  // Handle mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  useEffect(() => setIsClient(true), []);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (isClient) {
@@ -93,6 +97,14 @@ export default function Header({
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
+
+  const currentTheme = theme === 'system' ? systemTheme : theme;
+  const isDark = currentTheme === 'dark';
   const scrolledDown = scrollY > 80;
 
   const handleHeroHoverStart = () => {
@@ -118,7 +130,7 @@ export default function Header({
       name: "tree", src: "/icons/tree.png", white: "/icons/tree-white.png", action: () => console.log("tree clicked"),
     },
     {
-      name: "moon", src: "/icons/moon.png", white: "/icons/moon-white.png", action: () => setDarkMode(!darkMode),
+      name: "moon", src: "/icons/moon.png", white: "/icons/moon-white.png", action: () => setTheme(isDark ? 'light' : 'dark'),
     },
   ];
 
@@ -133,19 +145,19 @@ export default function Header({
       </div>
 
       {/* Hero Section */}
-      <div className="relative w-full z-40 overflow-hidden">
-        {darkMode && (
+      <div className="relative w-full z-40 overflow-hidden bg-white">
+        {isDark && (
           <>
             <div className="absolute inset-0 z-0 bg-[url('/stars.png')] bg-cover bg-center brightness-90 opacity-90 pointer-events-none transition-opacity duration-700" />
             <div className="absolute inset-0 z-10 bg-gradient-to-b from-[#111] via-transparent to-[#111] pointer-events-none" />
           </>
         )}
 
-        <div className={`relative z-20 flex flex-col items-center pt-16 pb-8 transition-colors duration-500 ease-in-out ${darkMode ? "bg-[#111]/70" : "bg-white"}`}>
+        <div className={`relative z-20 flex flex-col items-center pt-16 pb-8 transition-colors duration-500 ease-in-out ${isDark ? "bg-[#111]/70" : "bg-white"}`}>
           {/* Logo */}
           <div className="relative w-[300px] sm:w-[400px] h-[150px] sm:h-[200px] mb-4">
             <Image
-              src={darkMode ? "/logo-white.png" : "/logo.png"}
+              src={isDark ? "/logo-white.png" : "/logo.png"}
               alt="TreeHouse site logo"
               fill
               sizes="(max-width: 640px) 300px, (max-width: 1024px) 400px"
@@ -170,7 +182,7 @@ export default function Header({
               onChange={(e) => setHeroInputValue(e.target.value)}
               onFocus={() => setHeroInputFocused(true)}
               onBlur={() => setHeroInputFocused(false)}
-              className={`w-full rounded-full px-4 py-3 text-center border border-gray-300 dark:border-gray-500 bg-white text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#696e4a] text-lg ${heroInputFocused && !heroInputValue ? "caret-transparent" : "caret-black dark:caret-white"}`}
+              className={`w-full rounded-full px-4 py-3 text-center border border-gray-300 bg-white text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#696e4a] text-lg ${heroInputFocused && !heroInputValue ? "caret-transparent" : "caret-black"}`}
             />
             {isClient && heroInputValue === "" && (
               <AnimatePresence mode="wait">
@@ -190,14 +202,19 @@ export default function Header({
 
           {/* Hero Icons */}
           <div className="mt-6 flex gap-6 justify-center items-center flex-wrap">
-            {navIcons.map(({ name, src, white, action }) => (
+            {navIcons.map((icon) => (
               <button
-                key={name}
-                onClick={action}
-                className="w-12 h-12 hover:-translate-y-1 transition-transform flex items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/10"
-                aria-label={name}
+                key={icon.name}
+                onClick={icon.action}
+                className="relative w-12 h-12 rounded-full overflow-hidden transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#696e4a] focus:ring-offset-2"
               >
-                <Image src={darkMode ? white : src} alt={name} width={36} height={36} />
+                <Image
+                  src={isDark ? icon.white : icon.src}
+                  alt={`${icon.name} icon`}
+                  fill
+                  sizes="48px"
+                  className="object-contain p-2"
+                />
               </button>
             ))}
           </div>
@@ -206,15 +223,16 @@ export default function Header({
 
       {/* Sticky Header */}
       <div
-        className={`fixed top-0 left-0 w-full py-2 transition-all duration-300 ease-in-out backdrop-blur-xl shadow-md ${!scrolledDown ? "opacity-0 -translate-y-full pointer-events-none" : "opacity-100 translate-y-0"} ${darkMode ? "bg-[#111]/30" : "bg-white/30"} z-[1002]`}
+        className={`fixed top-0 left-0 w-full py-2 transition-all duration-300 ease-in-out backdrop-blur-xl shadow-md ${!scrolledDown ? "opacity-0 -translate-y-full pointer-events-none" : "opacity-100 translate-y-0"} ${isDark ? "bg-[#111]/30" : "bg-white/30"} z-[1002]`}
       >
         <div className="flex items-center w-full h-16 px-6 justify-between">
           <div className="relative w-[160px] h-[50px]">
             <Image
-              src={darkMode ? "/logo-white.png" : "/logo.png"}
+              src={isDark ? "/logo-white.png" : "/logo.png"}
               alt="TreeHouse small logo"
               fill
               className="object-contain"
+              priority
             />
           </div>
 
@@ -253,13 +271,18 @@ export default function Header({
             </motion.div>
 
             <div className="flex gap-3 items-center">
-              {navIcons.map(({ name, src, white, action }) => (
+              {navIcons.map((icon) => (
                 <button
-                  key={name + "-sticky"}
-                  onClick={action}
+                  key={icon.name + "-sticky"}
+                  onClick={icon.action}
                   className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-500/20 transition"
                 >
-                  <Image src={darkMode ? white : src} alt={name} width={28} height={28} />
+                  <Image
+                    src={isDark ? icon.white : icon.src}
+                    alt={`${icon.name} icon`}
+                    width={28}
+                    height={28}
+                  />
                 </button>
               ))}
             </div>
@@ -277,7 +300,7 @@ export default function Header({
       </div>
 
       {/* Modals */}
-      <CreateSeedModal isOpen={isSeedModalOpen} onClose={() => setIsSeedModalOpen(false)} darkMode={darkMode} />
+      <CreateSeedModal isOpen={isSeedModalOpen} onClose={() => setIsSeedModalOpen(false)} />
       <LoginModal isOpen={false} onClose={() => {}} />
     </>
   );

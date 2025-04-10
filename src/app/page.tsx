@@ -12,7 +12,7 @@ function getRandomType(): SeedCardData["type"] {
 
 function generateMockCards(count: number, startId = 0): SeedCardData[] {
   return Array.from({ length: count }, (_, i) => ({
-    id: `${startId + i + 1}`,
+    id: crypto.randomUUID(),
     seed: `Seed ${startId + i + 1}`,
     imageUrl: `https://picsum.photos/seed/${startId + i}/600/400`,
     type: getRandomType(),
@@ -48,17 +48,16 @@ export default function HomePage() {
     loadMoreCards(); // initial load
   }, []);
 
-  const handleImageClick = (url: string) => {
-    console.log("Clicked image:", url);
+  const handleImageClick = (card: SeedCardData) => {
+    console.log("Clicked image:", card.imageUrl);
   };
 
   return (
-    <main className="bg-white text-black transition-colors min-h-screen">
+    <main className="bg-white text-black dark:text-white transition-colors min-h-screen">
       <Header />
-      <div className="pt-[10px] pb-12 px-2 sm:px-4 md:px-6">
+      <div className="pt-[10px] pb-12 px-2 sm:px-4 md:px-6 bg-white">
         <CardGrid
           cards={cards}
-          darkMode={false}
           onImageClick={handleImageClick}
           lastCardRef={lastCardRef}
         />

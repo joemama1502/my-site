@@ -1,7 +1,6 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  productionSourceMaps: false, // ← disables sourcemap generation in prod
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -16,6 +15,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com', // ✅ Firebase images
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co', // Supabase storage URLs
       },
     ],
   },
